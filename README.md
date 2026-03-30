@@ -25,3 +25,4 @@ Na taj način sustav omogućuje cjelovito praćenje investicijskog ciklusa - od 
 - MySQL workbench file dostupan [ovdje](./eer-dijagram/eer-dijagram.mwb)
 - PDF file dostupan [ovdje](./eer-dijagram/eer-dijagram.pdf)
 - .png file dostupan [ovdje](./eer-dijagram/eer-dijagram.png)
+- SQL skripta generirana od strane MySQL workbencha na temelju EER dijagrama dostupna [ovdje](./eer-dijagram/eer-dijagram.sql)
