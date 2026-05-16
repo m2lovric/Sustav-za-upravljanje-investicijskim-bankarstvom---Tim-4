@@ -1,5 +1,9 @@
 # Poslovna pravila
 
+Ovaj dokument definira poslovna pravila i kardinalnosti veza korištene u modeliranju sustava za upravljanje investicijskim bankarstvom.
+
+# Poslovna pravila
+
 1. Jedan klijent može imati više investicijskih računa.
 
 2. Jedan investicijski račun pripada točno jednom klijentu.
