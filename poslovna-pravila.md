@@ -2,6 +2,8 @@
 
 Ovaj dokument definira poslovna pravila i kardinalnosti veza korištene u modeliranju sustava za upravljanje investicijskim bankarstvom.
 
+Link na radnu verziju ER dijagrama: [LINK](https://lucid.app/lucidchart/7ea2903a-2f67-4a6b-ba0b-7a78219bfdb7/edit?invitationId=inv_ebe2a288-2bef-43c8-87e5-48665d2ac714&page=0_0#)
+
 # Poslovna pravila
 
 1. Jedan klijent može imati više investicijskih računa.
