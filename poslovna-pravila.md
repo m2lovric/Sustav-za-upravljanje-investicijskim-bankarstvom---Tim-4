@@ -4,6 +4,8 @@ Ovaj dokument definira poslovna pravila i kardinalnosti veza korištene u modeli
 
 Link na radnu verziju ER dijagrama: [LINK](https://lucid.app/lucidchart/7ea2903a-2f67-4a6b-ba0b-7a78219bfdb7/edit?invitationId=inv_ebe2a288-2bef-43c8-87e5-48665d2ac714&page=0_0#)
 
+Link na Google Docs radni dokument sa zapisima logike ER dijagrama pitanja itd. (Vili): [LINK](https://docs.google.com/document/d/1wdzJmY9DG89P4Dsg0arZMcQmTe4I2udxjRUrtj7WKRs/edit?usp=sharing)
+
 # Poslovna pravila
 
 1. Jedan klijent može imati više investicijskih računa.
