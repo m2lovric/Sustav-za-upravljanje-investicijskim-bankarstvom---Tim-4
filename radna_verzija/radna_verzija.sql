@@ -30,7 +30,7 @@ CREATE TABLE investicijski_racun(
 	datum_otvaranja DATE NOT NULL,
 	FOREIGN KEY (klijent_id) REFERENCES klijent (id) ON DELETE CASCADE,
 	FOREIGN KEY (banka_id) REFERENCES banka (id) ON DELETE RESTRICT,
-	CHECK (broj_racuna REGEXP '^[A-Za-z]{2}[0-9]{19}$')
+	CHECK (broj_racuna REGEXP '^HR[0-9]{19}$')
 );
 
 CREATE TABLE portfelj(

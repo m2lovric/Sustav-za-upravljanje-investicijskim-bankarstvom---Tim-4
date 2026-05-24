@@ -118,10 +118,10 @@ CREATE TABLE investicijski_racun(
 	datum_otvaranja DATE NOT NULL,
 	FOREIGN KEY (klijent_id) REFERENCES klijent (id) ON DELETE CASCADE,
 	FOREIGN KEY (banka_id) REFERENCES banka (id) ON DELETE RESTRICT,
-	CHECK (broj_racuna REGEXP '^[A-Za-z]{2}[0-9]{19}$');
+	CHECK (broj_racuna REGEXP '^HR[0-9]{19}$');
 ```
 
-**broj_racuna** se ovdje odnosi na IBAN, a CHECK-om i REGEX-om provjeravamo da počinje dvama slovima, nakon kojih slijedi 19 numeričkih znakova.
+**broj_racuna** se ovdje odnosi na IBAN, a CHECK-om i REGEX-om provjeravamo da počinje dvama slovima HR, nakon kojih slijedi 19 numeričkih znakova.
 
 **stanje** označava dostupna sredstva na pojedinom računu, a koristi tip podatka DECIMAL (koji je fixed point čime se izbjegavaju nepreciznosti floating pointa koji nije uputno koristiti za novac) s 38 mogućih znamenki prije i 12 znamenki iza decimalne točke. [Budući da se naš hipotetski sustav odvija u Hrvatskoj i služi hrvatskim klijentima i bankama, pretpostavlja se da je riječ o eurima]
 
