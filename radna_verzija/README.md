@@ -52,3 +52,225 @@ Na taj način sustav omogućuje cjelovito praćenje investicijskog ciklusa - od 
 
 11) Transkacija bilježi i na koji se investicijski račun odnosi (one to many)
 
+
+#### 4. RELACIJSKI MODEL (sheme)
+
+
+
+#### 5. EER
+
+![EER](radna_verzija_EER.png)
+
+
+#### 6. TABLICE
+
+**VAŽNA NAPOMENA**: U sljedećem dijelu se objašnjavaju tablice naše baze. Pojedine stvari će se radi izbjegavanja nepotrebnog gomilanja teksta objasniti samo tamo gdje se prvi put pojavljuju. Drugim riječima: ako smo jednom pojasnili da ograničenje NOT NULL onemogućava unos redaka bez određenog atributa, to vrijedi svugdje gdje se to koristi. Jednako tako, **id** je u svakoj tablici primaran ključ (surogat) te se ni to neće posebno isticati u svakoj tablici.
+
+##### 6.1 TABLICA klijent
+
+``` sql
+CREATE TABLE klijent(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	ime VARCHAR(45) NOT NULL,
+	prezime VARCHAR(45) NOT NULL,
+	OIB VARCHAR(11) NOT NULL UNIQUE,
+	email VARCHAR(255) NOT NULL UNIQUE,
+	telefon VARCHAR(20) NOT NULL UNIQUE,
+	ulica_i_kucni_broj VARCHAR(255) NOT NULL,
+	postanski_broj CHAR(5) NOT NULL,
+	CHECK (OIB REGEXP '^[0-9]{11}$'),
+	CHECK (postanski_broj REGEXP '^[0-9]{5}$')
+);
+```
+
+Tablica klijent služi za vođenje evidencije o klijentima sustava.
+
+Atribut **id** je PRIMARY KEY tipa INT s obzirom na to da je riječ o brojčanoj vrijednosti. Budući da je riječ o primarnom ključu UNIQUE i NOT NULL nije potrebno navoditi. AUTO_INCREMENT služi automatskom dodavanju jedinstvene brojčane vrijednosti prilikom unošenja novog retka u tablicu. 
+
+Atributi **ime** i **prezime** su tipa VARCHAR te ne očekujemo da će biti duži od 45 znakova. Ograničenje NOT NULL služi obveznom unosu tih podataka.
+
+Atribut **OIB** osim što mora biti unesen (NOT NULL), mora biti i jedinstven (UNIQUE). Također, mora sadržavati točno 11 brojčanih znakova, što je zajamčeno CHECK-om i regularnim izrazima. Korištenje tipa INT ne bi imalo smisla zbog mogućih nula na početku broja. Također, OIB je ključ kandidat.
+
+Atributi **email** i **telefon** također moraju biti uneseni i biti jedinstveni. VARCHAR se koristi za telefon iz istog razloga kao i za OIB (vodeće nule), ali i zbog mogućnosti upisivanja znakova poput '+' i '-'.
+
+Atribut **ulica_i_kucni_broj** ne mora biti jedinstven (zbog mogućnosti da dva klijenta žive na istoj adresi) dok za **postanski_broj** CHECK-om ponovo jamčimo da će se raditi o točno pet znamenki.
+
+##### 6.2. TABLICA banka
+
+``` sql
+CREATE TABLE banka(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	ime VARCHAR(255) NOT NULL UNIQUE
+);
+```
+Primarni ključ predstavljen je atributom **id**, a **ime** označava službeni naziv institucije. Budući da je ono jedinstveno, predstavlja ključ-kandidat.
+
+##### 6.3 TABLICA investicijski_racun
+
+``` sql
+
+CREATE TABLE investicijski_racun(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	klijent_id INT NOT NULL,
+	banka_id INT NOT NULL,
+	broj_racuna VARCHAR(21) NOT NULL UNIQUE,
+	stanje DECIMAL(38,12) NOT NULL,
+	datum_otvaranja DATE NOT NULL,
+	FOREIGN KEY (klijent_id) REFERENCES klijent (id) ON DELETE CASCADE,
+	FOREIGN KEY (banka_id) REFERENCES banka (id) ON DELETE RESTRICT,
+	CHECK (broj_racuna REGEXP '^[A-Za-z]{2}[0-9]{19}$');
+```
+
+**broj_racuna** se ovdje odnosi na IBAN, a CHECK-om i REGEX-om provjeravamo da počinje dvama slovima, nakon kojih slijedi 19 numeričkih znakova.
+
+**stanje** označava dostupna sredstva na pojedinom računu, a koristi tip podatka DECIMAL (koji je fixed point čime se izbjegavaju nepreciznosti floating pointa koji nije uputno koristiti za novac) s 38 mogućih znamenki prije i 12 znamenki iza decimalne točke. [Budući da se naš hipotetski sustav odvija u Hrvatskoj i služi hrvatskim klijentima i bankama, pretpostavlja se da je riječ o eurima]
+
+**datum_otvaranja** je tipa DATE, a predstavlja datum stvaranja određenog investicijskog računa.
+
+Strani ključevi **klijent_id** i **banka_id**, označeni ključnom riječi FOREIGN KEY, povezuju tablicu s tablicama "klijent" i "banka" preko tamošnjih atributa **id** što je određeno ključnom riječi REFERENCES.
+
+ON DELETE CASCADE kod stranog ključa **klijent_id** jamči da će se prilikom brisanja pojedinog retka iz tablice "klijent", obrisati i odgovarajući retci u ovoj tablici.
+
+ON DELETE RESTRICT kod stranog ključa **banka_id** pak će spriječiti brisanje retka iz tablice "banka" ako još uvijek postoje retci u ovoj tablici povezani s njima, odnosno ako još uvijek postoje računi kojima ta banka upravlja. ON DELETE RESTRICT je također defaultno ponašanje.
+
+##### 6.4 TABLICA portfelj
+
+``` sql
+CREATE TABLE portfelj(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	investicijski_racun_id INT NOT NULL,
+	ime VARCHAR(100) NOT NULL,
+	datum_otvaranja DATETIME NOT NULL,
+	FOREIGN KEY (investicijski_racun_id) REFERENCES investicijski_racun (id) ON DELETE CASCADE
+);
+```
+
+**ime** portfelja mora biti uneseno. Ne mora biti jedinstveno samo po sebi, ali mora biti jedinstveno unutar jednog investicijskog računa, što je zajamčeno ograničenjem UNIQUE (investicijski_racun_id, ime), pri čemu je **investicijski_racun_id** strani ključ koji tablicu povezuje s tablicom "investicijski_racun".
+
+Ponovo, ON DELETE CASCADE će obrisati portfelj ako se obrisao investicijski račun kojemu pripada.
+
+##### 6.5 TABLICA uplata_isplata
+
+``` sql
+CREATE TABLE uplata_isplata(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	investicijski_racun_id INT NOT NULL,
+	broj_transakcije VARCHAR(45) NOT NULL UNIQUE,
+	iznos DECIMAL(38,12) UNSIGNED NOT NULL,
+	datum DATETIME NOT NULL,
+	vrsta_prometa ENUM("uplata", "isplata") NOT NULL,
+	FOREIGN KEY (investicijski_racun_id) REFERENCES investicijski_racun (id) ON DELETE CASCADE
+);
+```
+
+**broj_transkacije** je ovdje ključ kandidat i služi prije svega korisničkoj strani (dok se sama baza i dalje oslanja na surogat ključ **id**)
+
+**iznos** se odnosi na količinu novca koja se uplaćuje ili isplaćuje (što je određeno atributom **vrsta_prometa* koji je tip ENUM)
+
+**datum** zapravo predstavlja datum i vrijeme određene transakcije tipom DATETIME
+
+
+##### 6.6. TABLICA tip_imovine
+
+``` sql
+CREATE TABLE tip_imovine(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	tip VARCHAR(45) NOT NULL UNIQUE
+);
+```
+
+Atribut **tip** označava vrstu određene imovine te je ključ kandidat s obzirom na to da je jedinstven.
+
+##### 6.7 TABLICA imovina
+
+``` sql
+CREATE TABLE imovina(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	ime VARCHAR(45) NOT NULL UNIQUE,
+	tip_imovine_id INT NOT NULL,
+	trenutna_cijena DECIMAL(38,18) UNSIGNED NOT NULL,
+	FOREIGN KEY (tip_imovine_id) REFERENCES tip_imovine(id) ON DELETE RESTRICT
+);
+```
+**ime** predstavlja jedinstveni naziv neke imovine, a **trenutna_cijena** njezinu sadašnju cijenu. Kako ona nikada ne može biti manja od 0, koristi se ograničenje UNSIGNED.
+
+Također, **tip_imovine_id** predstavlja strani ključ iz tablice tip_imovine, odakle ga nije moguće obrisati dokle god postoji poveznica s njim u ovoj tablici.
+
+##### 6.8 TABLICA tip_transakcije
+``` sql
+CREATE TABLE tip_transakcije(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	tip VARCHAR(45) NOT NULL UNIQUE
+);
+```
+**tip** je ključ kandidat, a označava jedinstvenu vrstu transakcije poput "kupovina" ili "prodaja".
+
+##### 6.9 TABLICA transakcija
+
+``` sql
+CREATE TABLE transakcija(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	investicijski_racun_id INT NOT NULL,
+	imovina_id INT NOT NULL,
+	tip_transakcije_id INT NOT NULL,
+	broj_naloga VARCHAR(45) NOT NULL UNIQUE,
+	kolicina DECIMAL(38,18) UNSIGNED NOT NULL,
+	cijena DECIMAL(38,18) UNSIGNED NOT NULL,
+	naknada DECIMAL(38,18) UNSIGNED,
+	datum DATETIME NOT NULL,
+	FOREIGN KEY (investicijski_racun_id) REFERENCES investicijski_racun(id) ON DELETE CASCADE,
+	FOREIGN KEY (imovina_id) REFERENCES imovina (id) ON DELETE RESTRICT,
+	FOREIGN KEY (tip_transakcije_id) REFERENCES tip_transakcije (id) ON DELETE RESTRICT
+);
+```
+
+**broj_naloga** ima istu funkciju kao i **broj_transkacije** iz tablice "uplata_isplata", odnosno riječ je o ključu kandidatu koji služi korisničkoj strani za razliku od surogata **id**.
+
+**kolicina** se odnosi na količinu imovine koja se kupuje ili prodaje. UNSIGNED jer ne može biti negativna vrijednost, a isto vrijedi i za **cijenu** (određene imovine) i **naknadu**.
+
+**naknada** se odnosi na eventualnu cijenu same transakcije koja može biti NULL ako naknade nema.
+
+##### 6.10 TABLICA portfelj_imovina
+
+``` sql
+CREATE TABLE portfelj_imovina(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	portfelj_id INT NOT NULL,
+	imovina_id INT NOT NULL,
+	kolicina DECIMAL(38,18) UNSIGNED NOT NULL,
+	UNIQUE (portfelj_id, imovina_id),
+	FOREIGN KEY (portfelj_id) REFERENCES portfelj (id) ON DELETE CASCADE,
+	FOREIGN KEY (imovina_id) REFERENCES imovina (id) ON DELETE RESTRICT
+);
+```
+
+Ova tablica vodi evidenciju o tome koliko koji portfelj ima koje imovine, što se postiže stranim ključevima **portfelj_id** i **imovina_id** te atributom **kolicina**.
+Pritom se ne može ista imovina više puta pojaviti u istom portfelju, što je zajamčeno ograničenjem UNIQUE (portfelj_id, imovina_id).
+
+##### 6.11 TABLICA povijesna_cijena_imovine 
+``` sql
+CREATE TABLE povijesna_cijena_imovine(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	imovina_id INT NOT NULL,
+	cijena DECIMAL(38,18) UNSIGNED NOT NULL,
+	datum DATETIME NOT NULL,
+	FOREIGN KEY (imovina_id) REFERENCES imovina (id) ON DELETE CASCADE
+);
+```
+
+U ovoj tablici se vode povijesne cijene imovine na određeni **datum**, no ostavljen je tip DATETIME u slučaju da se želi početi gledati i kretanje cijena kroz sate ili minute.
+
+##### 6.12 TABLICA dividenda
+
+``` sql
+CREATE TABLE dividenda(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	imovina_id INT NOT NULL,
+	datum DATETIME NOT NULL,
+	iznos DECIMAL(38,18) UNSIGNED NOT NULL,
+	FOREIGN KEY (imovina_id) REFERENCES imovina(id) ON DELETE CASCADE
+);
+```
+
+U ovoj tablici se vodi evidencija o isplaćenim dividendama za određene vrste imovine, što je predstavljeno atributom **iznos** koji se isplaćuje na određeni **datum**.
+

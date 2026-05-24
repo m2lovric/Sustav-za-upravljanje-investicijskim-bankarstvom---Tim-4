@@ -30,7 +30,7 @@ CREATE TABLE investicijski_racun(
 	datum_otvaranja DATE NOT NULL,
 	FOREIGN KEY (klijent_id) REFERENCES klijent (id) ON DELETE CASCADE,
 	FOREIGN KEY (banka_id) REFERENCES banka (id) ON DELETE RESTRICT,
-	CHECK (broj_racuna REGEXP '^[0-9]{21}$')
+	CHECK (broj_racuna REGEXP '^[A-Za-z]{2}[0-9]{19}$')
 );
 
 CREATE TABLE portfelj(
@@ -38,7 +38,8 @@ CREATE TABLE portfelj(
 	investicijski_racun_id INT NOT NULL,
 	ime VARCHAR(100) NOT NULL,
 	datum_otvaranja DATETIME NOT NULL,
-	FOREIGN KEY (investicijski_racun_id) REFERENCES investicijski_racun (id) ON DELETE CASCADE
+	FOREIGN KEY (investicijski_racun_id) REFERENCES investicijski_racun (id) ON DELETE CASCADE,
+	UNIQUE (investicijski_racun_id, ime)
 );
 
 CREATE TABLE uplata_isplata(
@@ -77,7 +78,7 @@ CREATE TABLE transakcija(
 	broj_naloga VARCHAR(45) NOT NULL UNIQUE,
 	kolicina DECIMAL(38,18) UNSIGNED NOT NULL,
 	cijena DECIMAL(38,18) UNSIGNED NOT NULL,
-	naknada DECIMAL(38,18) UNSIGNED NULL,
+	naknada DECIMAL(38,18) UNSIGNED,
 	datum DATETIME NOT NULL,
 	FOREIGN KEY (investicijski_racun_id) REFERENCES investicijski_racun(id) ON DELETE CASCADE,
 	FOREIGN KEY (imovina_id) REFERENCES imovina (id) ON DELETE RESTRICT,
