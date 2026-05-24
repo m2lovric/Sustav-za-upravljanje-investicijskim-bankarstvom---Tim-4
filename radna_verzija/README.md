@@ -118,7 +118,8 @@ CREATE TABLE investicijski_racun(
 	datum_otvaranja DATE NOT NULL,
 	FOREIGN KEY (klijent_id) REFERENCES klijent (id) ON DELETE CASCADE,
 	FOREIGN KEY (banka_id) REFERENCES banka (id) ON DELETE RESTRICT,
-	CHECK (broj_racuna REGEXP '^HR[0-9]{19}$');
+	CHECK (broj_racuna REGEXP '^HR[0-9]{19}$')
+);
 ```
 
 **broj_racuna** se ovdje odnosi na IBAN, a CHECK-om i REGEX-om provjeravamo da počinje dvama slovima HR, nakon kojih slijedi 19 numeričkih znakova.
@@ -141,7 +142,8 @@ CREATE TABLE portfelj(
 	investicijski_racun_id INT NOT NULL,
 	ime VARCHAR(100) NOT NULL,
 	datum_otvaranja DATETIME NOT NULL,
-	FOREIGN KEY (investicijski_racun_id) REFERENCES investicijski_racun (id) ON DELETE CASCADE
+	FOREIGN KEY (investicijski_racun_id) REFERENCES investicijski_racun (id) ON DELETE CASCADE,
+	UNIQUE (investicijski_racun_id, ime) 
 );
 ```
 
