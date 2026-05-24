@@ -27,48 +27,39 @@ Na taj način sustav omogućuje cjelovito praćenje investicijskog ciklusa - od 
 #### 2. ER dijagram:
 ![ERD](radna_verzija_ER.png)
 
+#### 3. OPIS ER DIJAGRAMA
 
-#### 3. OPIS ER DIJAGRAMA:
+1. **klijent** i **investicijski_racun** su u vezi tipa **one-to-many (1:M)**. Jedan klijent može posjedovati više investicijskih računa, dok pojedini investicijski račun pripada točno jednom klijentu. Veza je sa strane investicijskog računa **potpuno uključena (totalna participacija)**, što znači da je pri unosu računa obavezno definirati pripadajućeg klijenta.<br>
+2. **banka** i **investicijski_racun** su u vezi tipa **one-to-many (1:M)**. Jedna banka može upravljati većim brojem investicijskih računa, dok pojedini investicijski račun pripada točno jednoj banci. Veza je sa strane investicijskog računa **potpuno uključena** jer svaki račun mora biti otvoren unutar jedne konkretne banke.<br>
+3. **investicijski_racun** i **uplata_isplata** su u vezi tipa **one-to-many (1:M)**. Na jednom investicijskom računu može se izvršiti više uplata ili isplata, dok se svaka pojedinačna uplata ili isplata odnosi na točno jedan investicijski račun. Svaki novčani promet mora biti evidentiran na točno određenom računu.<br>
+4. **investicijski_racun** i **portfelj** su u vezi tipa **one-to-many (1:M)**. Jedan investicijski račun može sadržavati više portfelja, dok pojedini portfelj pripada točno jednom investicijskom računu. Veza je sa strane portfelja **potpuno uključena** jer je portfelj nužno vezan za krovni investicijski račun.<br>
+5. **portfelj** i **imovina** su u vezi tipa **many-to-many (M:N)**. Jedan portfelj može sadržavati više različitih imovina, a ista imovina može biti dio više različitih portfelja. Budući da je riječ o **many-to-many** vezi, količina imovine unutar pojedinog portfelja modelirana je kao **opisni atribut** ove veze.<br>
+6. **tip_imovine** i **imovina** su u vezi tipa **one-to-many (1:M)**. Jedan tip imovine kategorizira više različitih imovina, dok pojedina imovina pripada točno jednom tipu imovine. Veza je sa strane imovine **potpuno uključena** jer svaka imovina mora biti klasificirana pod jedan definiran tip.<br>
+7. **imovina** i **povijesna_cijena_imovine** su u **identifikacijskoj vezi** tipa **one-to-many (1:M)**. Povijesna cijena je **slabi skup entiteta** čije postojanje egzistencijalno ovisi o jakom skupu entiteta imovina, a njezin parcijalni ključ (**diskriminator**) je predstavljen atributom datum. Slabi entitet podrazumijeva i potpunu uključenost.<br>
+8. **imovina** i **dividenda** su u **identifikacijskoj vezi** tipa **one-to-many (1:M)**. Dividenda je **slabi skup entiteta** čije postojanje egzistencijalno ovisi o jakom skupu entiteta imovina, a njezin parcijalni ključ (**diskriminator**) je predstavljen datumom.<br>
+9. **tip_transakcije** i **transakcija** su u vezi tipa **one-to-many (1:M)**. Jedan tip transakcije definira vrstu za više različitih transakcija, dok pojedina transakcija ima točno jedan definiran tip. Veza je sa strane transakcije **potpuno uključena** jer svaka transakcija mora imati određenu vrstu (npr. kupovina ili prodaja).<br>
+10. **imovina** i **transakcija** su u vezi tipa **one-to-many (1:M)**. Nad jednom imovinom može se izvršiti više različitih transakcija, dok se svaka pojedinačna transakcija odnosi na točno jednu imovinu. Veza je sa strane transakcije **potpuno uključena (totalna participacija)** jer se transakcija mora provesti nad konkretnom imovinom.<br>
+11. **investicijski_racun** i **transakcija** su u vezi tipa **one-to-many (1:M)**. Na jednom investicijskom računu može se izvršiti više transakcija, dok se svaka pojedinačna transakcija veže za točno jedan investicijski račun. Veza je sa strane transakcije **potpuno uključena** jer svaka transakcija mora teretiti ili odobravati točno određeni investicijski račun.<br>
 
-1) Klijent posjeduje investicijski račun (one to many, klijent može imati više investicijski računa, ali svaki investicijski račun pripada samo jednom klijentu)
-
-2) Banka upravlja investicijskim računom (one to many, banka može upravljati većim brojem računa, ali račun pripad samo jednoj banci)
-
-3) Skup entiteta uplata_isplata evidentira uplate i isplate na određenom investicijskom računom (one to many, investicijski račun može imati više uplata koje se odnose na njega, ali jedna uplata ili isplata se odnosi isključivo na jedan račun)
-
-4) Portfelj pripada investicijskom računu (one to many, račun može imati više portfelja, ali portfelj se odnosi samo na jedan račun)
-
-5) Portfelj sadrži imovinu (many to many, portfelj može sadržavati više imovina, koje mogu sudjelovati u više portfelja) [budući da je riječ o many to many vezi, količina imovine je označena kao opisni atribut te ovdje nastaje nova relacija]
-
-6) Tip imovine kategorizira pojedinu imovinu (one to many, jedan tip se odnosi na više imovina, ali imovina ima samo jedan tip)
-
-7) Povijesna cijena bilježi kretanje cijena imovine kroz vrijeme (one to many, jedna imovina ima više različitih cijena, ali svaka cijena se odnosi na samo jednu imovinu) Također, ovo je slabi entitet, a diskriminator je predstavljen datumom
-
-8) Dividenda se isplaćuje za pojedinu imovinu (one to many, jedna imovina može imati više dividendi, ali dividende isplaćuju za samo jednu imovinu) Također, ovo je slab entitet (označen dvostrukim rombom), a diskriminator je predstavljen "brojem_isplate"
-
-9) Tip transkacije definira vrstu transakcije (one to many, tip se može odnositi na više transakcija, ali transkacija ima samo jedan tip)
-
-10) Transakcija se izvodi s imovinama (one to many, s jednom imovinom su moguće različite transkacije, ali jedna transkacija se odnosi na samo jednu imovinu)
-
-11) Transkacija bilježi i na koji se investicijski račun odnosi (one to many)
-
+---
 
 #### 4. RELACIJSKI MODEL (sheme)
 
-U fazi relacijskog modeliranja uveli smo surogatne ključeve za sve entitete radi optimizacije performansi i lakše implementacije u SQL-u.<br>
+U fazi relacijskog modeliranja uvodimo surogatne ključeve za sve entitete radi optimizacije performansi i lakše implementacije u SQL-u. 
+*(Napomena: **Podebljani** atributi su primarni ključevi, a *kosi* atributi su strani ključevi).*
 
-**klijent**(<u>id_klijent</u>, ime, prezime, OIB, email, telefon, ulica_i_kucni_broj, postanski_broj, grad)<br>
-**banka**(<u>id_banka</u>, ime)<br>
-**investicijski_racun**(<u>id_investicijski_racun</u>, id_klijent, id_banka, broj_racuna, stanje, datum_otvaranja)<br>
-**portfelj**(<u>id_portfelj</u>, id_investicijski_racun, ime, datum_otvaranja)<br>
-**uplata_isplata**(<u>id_uplata_isplata</u>, id_investicijski_racun, broj_transakcije, iznos, datum, vrsta_prometa)<br>
-**tip_imovine**(<u>id_tip_imovine</u>, tip)<br>
-**imovina**(<u>id_imovina</u>, ime, trenutna_cijena, id_tip_imovine)<br>
-**tip_transakcije**(<u>id_tip_transakcije</u>, tip)<br>
-**transakcija**(<u>id_transakcija</u>, id_imovina, id_tip_transakcije, broj_naloga, kolicina, cijena, naknada, datum)<br>
-**portfelj_imovina**(<u>id_portfelj_imovina</u>, id_portfelj, id_imovina, kolicina)<br>
-**povijesna_cijena_imovine**(<u>id_povijesna_cijena_imovine</u>, id_imovina, cijena, datum)<br>
-**dividenda**(<u>id_dividenda</u>, id_imovina, datum_isplate, iznos)<br>
+* **klijent** (**klijent_id**, ime, prezime, OIB, email, telefon, ulica_i_kucni_broj, postanski_broj, mjesto)
+* **banka** (**banka_id**, ime)
+* **investicijski_racun** (**investicijski_racun_id**, *klijent_id*, *banka_id*, broj_racuna, stanje, datum_otvaranja)
+* **portfelj** (**portfelj_id**, *investicijski_racun_id*, ime, datum_otvaranja)
+* **uplata_isplata** (**uplata_isplata_id**, *investicijski_racun_id*, broj_transakcije, iznos, datum, vrsta_prometa)
+* **tip_imovine** (**tip_imovine_id**, tip)
+* **imovina** (**imovina_id**, ime, trenutna_cijena, *tip_imovine_id*)
+* **tip_transakcije** (**tip_transakcije_id**, tip)
+* **transakcija** (**transakcija_id**, *imovina_id*, *tip_transakcije_id*, broj_naloga, kolicina, cijena, naknada, datum)
+* **portfelj_imovina** (**portfelj_imovina_id**, *portfelj_id*, *imovina_id*, kolicina)
+* **povijesna_cijena_imovine** (**povijesna_cijena_imovine_id**, *imovina_id*, cijena, datum)
+* **dividenda** (**dividenda_id**, *imovina_id*, datum, iznos)
 
 #### 5. EER
 
@@ -91,7 +82,7 @@ CREATE TABLE klijent(
 	telefon VARCHAR(20) NOT NULL UNIQUE,
 	ulica_i_kucni_broj VARCHAR(255) NOT NULL,
 	postanski_broj CHAR(5) NOT NULL,
-	grad VARCHAR(45) NOT NULL,
+	mjesto VARCHAR(45) NOT NULL,
 	CHECK (OIB REGEXP '^[0-9]{11}$'),
 	CHECK (postanski_broj REGEXP '^[0-9]{5}$')
 );
@@ -109,7 +100,7 @@ Atributi **email** i **telefon** također moraju biti uneseni i biti jedinstveni
 
 Atribut **ulica_i_kucni_broj** ne mora biti jedinstven (zbog mogućnosti da dva klijenta žive na istoj adresi) dok za **postanski_broj** CHECK-om ponovo jamčimo da će se raditi o točno pet znamenki.
 
-Atribut **grad** mora biti unesen, ali ne mora biti UNIQUE jer se odnosi i na sela (a moguće je da se neka isto zovu).
+Atribut **mjesto** mora biti unesen, ali ne mora biti UNIQUE jer se odnosi i na sela (a moguće je da se neka isto zovu).
 
 ##### 6.2. TABLICA banka
 
@@ -181,11 +172,12 @@ CREATE TABLE uplata_isplata(
 );
 ```
 
-**broj_transkacije** je ovdje ključ kandidat i služi prije svega korisničkoj strani (dok se sama baza i dalje oslanja na surogat ključ **id**)
 
-**iznos** se odnosi na količinu novca koja se uplaćuje ili isplaćuje (što je određeno atributom **vrsta_prometa* koji je tip ENUM)
+Ova tablica vodi evidenciju o svim novčanim tokovima na investicijskom računu. Iako je na konceptualnom ERD dijagramu kao primarni ključ identificiran prirodni poslovni ključ **broj_transakcije** (budući da bankarski sustavi koriste jedinstvene interne brojeve transakcija), u relacijskom modelu i SQL kodu uveden je surogatni ključ id radi optimizacije performansi baze i lakšeg mapiranja stranih ključeva.
 
-**datum** zapravo predstavlja datum i vrijeme određene transakcije tipom DATETIME
+Prirodni ključ **broj_transakcije** je u kodu zadržan kao ključ kandidat uz ograničenje **UNIQUE**, čime je osigurano da se unutar sustava ne može pojaviti dupli unos iste bankovne transakcije. Atribut **iznos** odnosi se na količinu novca, što je određeno atributom **vrsta_prometa** koji je tip ENUM. 
+
+Ograničenje UNSIGNED kod iznosa osigurava da ne mogu postojati negativne vrijednosti. Atribut **datum** (tip DATETIME) precizno bilježi točan trenutak izvršenja prometa.
 
 
 ##### 6.6. TABLICA tip_imovine
@@ -241,8 +233,7 @@ CREATE TABLE transakcija(
 	FOREIGN KEY (tip_transakcije_id) REFERENCES tip_transakcije (id) ON DELETE RESTRICT
 );
 ```
-
-**broj_naloga** ima istu funkciju kao i **broj_transkacije** iz tablice "uplata_isplata", odnosno riječ je o ključu kandidatu koji služi korisničkoj strani za razliku od surogata **id**.
+**broj_naloga** ima istu funkciju kao i **broj_transakcije** iz tablice "uplata_isplata". Na konceptualnom ERD-u je to primarni ključ, no u SQL-u smo uveli surogat **id** kao primarni ključ baze, dok je **broj_naloga** ostao kao ključ kandidat uz **UNIQUE** ograničenje koji služi korisničkoj strani za razlikovanje pojedinačnih transakcija.
 
 **kolicina** se odnosi na količinu imovine koja se kupuje ili prodaje. UNSIGNED jer ne može biti negativna vrijednost, a isto vrijedi i za **cijenu** (određene imovine) i **naknadu**.
 
@@ -272,11 +263,13 @@ CREATE TABLE povijesna_cijena_imovine(
 	imovina_id INT NOT NULL,
 	cijena DECIMAL(38,18) UNSIGNED NOT NULL,
 	datum DATETIME NOT NULL,
-	FOREIGN KEY (imovina_id) REFERENCES imovina (id) ON DELETE CASCADE
+	FOREIGN KEY (imovina_id) REFERENCES imovina (id) ON DELETE CASCADE,
+	UNIQUE (imovina_id, datum)
 );
 ```
 
-U ovoj tablici se vode povijesne cijene imovine na određeni **datum**, no ostavljen je tip DATETIME u slučaju da se želi početi gledati i kretanje cijena kroz sate ili minute.
+Na konceptualnoj razini (ERD), povijesna_cijena_imovine je slabi skup entiteta kojemu je **datum** parcijalni ključ (diskriminator). Međutim, prilikom prevođenja u relacijski model i SQL, uveli smo surogatni ključ **id** kao primarni ključ radi lakše implementacije. Međutim, nad kombinacijom atributa imovina_id i datum uveli smo UNIQUE ograničenje, čime se u praksi sprječava višestruki unos različitih cijena za istu imovinu u istom vremenskom trenutku.
+
 
 ##### 6.12 TABLICA dividenda
 
@@ -286,9 +279,10 @@ CREATE TABLE dividenda(
 	imovina_id INT NOT NULL,
 	datum DATETIME NOT NULL,
 	iznos DECIMAL(38,18) UNSIGNED NOT NULL,
-	FOREIGN KEY (imovina_id) REFERENCES imovina(id) ON DELETE CASCADE
+	FOREIGN KEY (imovina_id) REFERENCES imovina(id) ON DELETE CASCADE,
+	UNIQUE (imovina_id, datum)
 );
 ```
 
-U ovoj tablici se vodi evidencija o isplaćenim dividendama za određene vrste imovine, što je predstavljeno atributom **iznos** koji se isplaćuje na određeni **datum**.
-
+Ova tablica bilježi iznos isplaćenih dividendi za određenu imovinu na zadani **datum**.
+Primijenjena je identična logika kao kod povijesnih cijena: uz surogatni **id**, ograničenje UNIQUE (imovina_id, datum) definira tu kombinaciju kao ključ kandidat i sprječava dvostruki unos isplate dividende za istu imovinu u istom trenutku.

@@ -12,7 +12,7 @@ CREATE TABLE klijent(
 	telefon VARCHAR(20) NOT NULL UNIQUE,
 	ulica_i_kucni_broj VARCHAR(255) NOT NULL,
 	postanski_broj CHAR(5) NOT NULL,
-	grad VARCHAR(45) NOT NULL,
+	mjesto VARCHAR(45) NOT NULL,
 	CHECK (OIB REGEXP '^[0-9]{11}$'),
 	CHECK (postanski_broj REGEXP '^[0-9]{5}$')
 );
@@ -172,7 +172,7 @@ INSERT INTO banka (id, ime) VALUES
 -- ==========================================
 -- 4. KLIJENT (30 zapisa s validnim OIB-om i poštanskim brojem)
 -- ==========================================
-INSERT INTO klijent (id, ime, prezime, OIB, email, telefon, ulica_i_kucni_broj, postanski_broj, grad) VALUES
+INSERT INTO klijent (id, ime, prezime, OIB, email, telefon, ulica_i_kucni_broj, postanski_broj, mjesto) VALUES
 (1, 'Ivan', 'Horvat', '12345678901', 'ivan.horvat@email.com', '+385911234567', 'Ilica 20', '10000', 'Zagreb'),
 (2, 'Marija', 'Kovačić', '23456789012', 'marija.kovacic@email.com', '+385912345678', 'Vukovarska 45', '21000', 'Split'),
 (3, 'Luka', 'Babić', '34567890123', 'luka.babic@email.com', '+385913456789', 'Strossmayerova 12', '31000', 'Osijek'),
