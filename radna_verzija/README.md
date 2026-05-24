@@ -78,6 +78,7 @@ CREATE TABLE klijent(
 	telefon VARCHAR(20) NOT NULL UNIQUE,
 	ulica_i_kucni_broj VARCHAR(255) NOT NULL,
 	postanski_broj CHAR(5) NOT NULL,
+	grad VARCHAR(45) NOT NULL,
 	CHECK (OIB REGEXP '^[0-9]{11}$'),
 	CHECK (postanski_broj REGEXP '^[0-9]{5}$')
 );
@@ -94,6 +95,8 @@ Atribut **OIB** osim što mora biti unesen (NOT NULL), mora biti i jedinstven (U
 Atributi **email** i **telefon** također moraju biti uneseni i biti jedinstveni. VARCHAR se koristi za telefon iz istog razloga kao i za OIB (vodeće nule), ali i zbog mogućnosti upisivanja znakova poput '+' i '-'.
 
 Atribut **ulica_i_kucni_broj** ne mora biti jedinstven (zbog mogućnosti da dva klijenta žive na istoj adresi) dok za **postanski_broj** CHECK-om ponovo jamčimo da će se raditi o točno pet znamenki.
+
+Atribut **grad** mora biti unesen, ali ne mora biti UNIQUE jer se odnosi i na sela (a moguće je da se neka isto zovu).
 
 ##### 6.2. TABLICA banka
 
