@@ -55,7 +55,20 @@ Na taj način sustav omogućuje cjelovito praćenje investicijskog ciklusa - od 
 
 #### 4. RELACIJSKI MODEL (sheme)
 
+U fazi relacijskog modeliranja uveli smo surogatne ključeve za sve entitete radi optimizacije performansi i lakše implementacije u SQL-u.
 
+**klijent**(<u>id_klijent</u>, ime, prezime, OIB, email, telefon, ulica_i_kucni_broj, postanski_broj, grad)
+**banka**(<u>id_banka</u>, ime)
+**investicijski_racun**(<u>id_investicijski_racun</u>, id_klijent, id_banka, broj_racuna, stanje, datum_otvaranja)
+**portfelj**(<u>id_portfelj</u>, id_investicijski_racun, ime, datum_otvaranja)
+**uplata_isplata**(<u>id_uplata_isplata</u>, id_investicijski_racun, broj_transakcije, iznos, datum, vrsta_prometa)
+**tip_imovine**(<u>id_tip_imovine</u>, tip)
+**imovina**(<u>id_imovina</u>, ime, trenutna_cijena,  id_tip_imovine)
+**tip_transakcije**(<u>id_tip_transakcije</u>, tip)
+**transakcija**(<u>id_transakcija</u>, id_imovina, id_tip_transakcije, broj_naloga, kolicina, cijena, naknada, datum)
+**portfelj_imovina**(<u>id_portfelj_imovina</u>, id_portfelj, id_imovina, kolicina)
+**povijesna_cijena_imovine**(<u>id_povijesna_cijena_imovine</u>, id_imovina, cijena, datum)
+**dividenda**(<u>id_dividenda</u>, id_imovina, datum_isplate, iznos)
 
 #### 5. EER
 
