@@ -12,6 +12,7 @@ CREATE TABLE klijent(
 	telefon VARCHAR(20) NOT NULL UNIQUE,
 	ulica_i_kucni_broj VARCHAR(255) NOT NULL,
 	postanski_broj CHAR(5) NOT NULL,
+	grad VARCHAR(45) NOT NULL UNIQUE,
 	CHECK (OIB REGEXP '^[0-9]{11}$'),
 	CHECK (postanski_broj REGEXP '^[0-9]{5}$')
 );
