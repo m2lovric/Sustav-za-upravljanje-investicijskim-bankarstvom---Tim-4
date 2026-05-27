@@ -483,3 +483,127 @@ INSERT INTO dividenda (id, imovina_id, datum, iznos) VALUES
 (28, 6, '2022-06-25 00:00:00', 1.50),
 (29, 6, '2023-06-28 00:00:00', 1.80),
 (30, 5, '2023-07-15 00:00:00', 5.00);
+
+
+
+-- ==============================================================================
+-- ======= ZAGRIJAVANJE (ODRAĐENO) ========
+-- ==============================================================================
+
+SELECT k.ime, k.prezime, ROUND(r.stanje, 2)
+FROM klijent AS k 
+JOIN investicijski_racun AS r ON k.id = r.klijent_id;
+
+SELECT ime, prezime, mjesto, ROUND(r.stanje, 2)
+FROM klijent AS k 
+JOIN investicijski_racun AS r ON k.id = r.klijent_id
+WHERE mjesto = 'Zagreb'
+ORDER BY r.stanje DESC;
+                    
+SELECT * FROM tip_transakcije;
+
+
+-- ==============================================================================
+-- UPIT 1: KLIJENTI S UPLATAMA, ALI BEZ IKAKVIH INVESTICIJA (NOT IN podupit)
+--
+-- POSLOVNI PROBLEM:
+-- Marketing odjel želi identificirati klijente koji su uplatili novac na platformu 
+-- (imaju zapis u tablici 'uplata_isplata'), ali još uvijek nisu kupili niti jednu 
+-- dionicu niti kriptovalutu (nemaju zapisa u tablici 'transakcija'). Cilj je poslati 
+-- im promo kod kako bi ih se potaknulo na prvu investiciju.
+--
+
+-- ==============================================================================
+
+SELECT 
+    k.ime, 
+    k.prezime, 
+    ir.id AS investicijski_racun_id
+FROM klijent k
+JOIN investicijski_racun ir ON k.id = ir.klijent_id
+JOIN uplata_isplata ui ON ir.id = ui.investicijski_racun_id
+WHERE ui.vrsta_prometa = 'uplata' -- Ovdje je popravljeno na 'vrsta_prometa'!
+  AND ir.id NOT IN (
+      SELECT investicijski_racun_id 
+      FROM transakcija
+  )
+GROUP BY k.id, k.ime, k.prezime, ir.id;
+
+
+-- ==============================================================================
+-- UPIT 2: NAJPOPULARNIJA IMOVINA NA PLATFORMI (Agregacija, Zaokruživanje i Sortiranje)
+--
+-- POSLOVNI PROBLEM:
+-- Odjel analize tržišta želi znati u koje investicijske instrumente (dionice ili 
+-- kriptovalute) naši klijenti ulažu najviše novca. Potrebno je ispisati naziv 
+-- imovine, ukupan broj transakcija vezanih za nju, te ukupnu sumu novca koja je 
+-- u nju uložena (kolicina * cijena) zaokruženu na dvije decimale radi preglednosti 
+-- financijskog izvještaja. Rezultat sortirati od najpopularnije imovine.
+-- ==============================================================================
+
+SELECT 
+    i.ime AS naziv_imovine,
+    COUNT(t.id) AS ukupan_broj_transakcija,
+    ROUND(SUM(t.kolicina * t.cijena), 2) AS ukupno_ulozen_novac
+FROM imovina i
+JOIN transakcija t ON i.id = t.imovina_id
+GROUP BY i.id, i.ime
+ORDER BY ukupno_ulozen_novac DESC;
+
+
+-- ==============================================================================
+-- VIEW 1: KATALOG IMOVINE S TRENUTNIM CIJENAMA
+--
+-- POSLOVNI PROBLEM:
+-- Unutar aplikacije na ekranu "Katalog imovine" klijentima je potrebno prikazati 
+-- popis svih dostupnih dionica i kriptovaluta, ali isključivo s njihovom zadnjom 
+-- (trenutnom) cijenom. Budući da tablica 'povijesna_cijena_imovine' sadrži kompletnu 
+-- povijest i sve promjene cijena kroz vrijeme, cilj je kreirati pogled koji će za 
+-- svaku imovinu izolirati samo onaj redak koji ima najnoviji datum upisa.
+
+-- ==============================================================================
+
+CREATE OR REPLACE VIEW katalog_imovine_cijene AS 
+SELECT i.ime, ti.tip, pci.cijena, pci.datum
+FROM imovina i 
+JOIN tip_imovine ti ON i.tip_imovine_id = ti.id
+JOIN povijesna_cijena_imovine pci ON i.id = pci.imovina_id
+WHERE pci.datum = (
+    SELECT MAX(pci2.datum)
+    FROM povijesna_cijena_imovine pci2
+    WHERE pci2.imovina_id = pci.imovina_id
+);
+
+
+SELECT * FROM katalog_imovine_cijene;
+
+
+-- ==============================================================================
+-- VIEW 2: STRUKTURA PORTFELJA KORISNIKA (DIONICE VS. KRIPTOVALUTE)
+--
+-- POSLOVNI PROBLEM:
+-- Služba za korisničku podršku (Helpdesk) treba brzi uvid u diverzifikaciju imovine 
+-- klijenta kada on podnese upit o svom računu. Potrebno je kreirati pogled koji 
+-- za svakog klijenta (ime, prezime) ispisuje kategoriju imovine (Dionica, 
+-- Kriptovaluta, itd.) te ukupnu količinu te imovine koju klijent trenutno 
+-- posjeduje unutar svih svojih portfelja.
+
+-- ==============================================================================
+
+CREATE OR REPLACE VIEW struktura_portfelja_korisnika AS
+SELECT 
+    k.prezime, 
+    k.ime, 
+    ti.tip AS kategorija_imovine, 
+    SUM(pi.kolicina) AS ukupna_kolicina
+FROM klijent k
+JOIN investicijski_racun ir ON k.id = ir.klijent_id
+JOIN portfelj p ON ir.id = p.investicijski_racun_id
+JOIN portfelj_imovina pi ON p.id = pi.portfelj_id
+JOIN imovina i ON pi.imovina_id = i.id
+JOIN tip_imovine ti ON i.tip_imovine_id = ti.id
+GROUP BY k.id, k.ime, k.prezime, ti.id, ti.tip;
+
+
+SELECT * FROM struktura_portfelja_korisnika
+ORDER BY prezime ASC, ime ASC;
