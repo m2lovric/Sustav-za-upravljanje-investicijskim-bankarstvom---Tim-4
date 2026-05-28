@@ -8,7 +8,7 @@
 
 Sustav modelira proces investicijskog bankarstva za građane, omogućujući upravljanje korisnicima, njihovim investicijskim računima te ulaganjima u različite financijske instrumente. Sustav služi kao baza podataka za mobilnu aplikaciju koju svakodnevno koriste mali investitori odnosno građani.
 
-Ova verzija sustava znatno je pojednostavljena radi prirode projekta, ali se iz iste mogu izvući relevatni podaci i način funkcioniranja samog sustava. Važno za naglasiti - sustav se fokusira na područje RH i samim time pretpostavlja isključivo iznose u eurima. Ovaj pojednostavljeni sustav nije predviđen da podržava druge value.
+Ova verzija sustava znatno je pojednostavljena radi prirode projekta, ali se iz iste mogu izvući relevatni podaci i način funkcioniranja samog sustava. Važno za naglasiti - sustav se fokusira na područje RH i samim time pretpostavlja isključivo iznose u eurima. Ovaj pojednostavljeni sustav nije predviđen da podržava druge valute.
 
 Proces započinje registracijom klijenta u sustav, pri čemu se pohranjuju osnovni osobni podaci. Sami proces registracije i spremanja korisničkog imena i lozinke je preskočen da bismo zadržali projekt u potrebnim granicama.
 Nakon registracije ili prijave u sustav, klijent može otvoriti jedan ili više investicijskih računa u odabranoj banci. Svaki investicijski račun pripada točno jednom klijentu i jednoj banci.
@@ -185,7 +185,7 @@ Atribut **id** je PRIMARY KEY tipa INT s obzirom na to da je riječ o brojčanoj
 
 **opis_portfelja** je kratak opis čemu služi i koja je poanta pofrtelja. Taj atribut je tipa VARCHAR te je nullable jer ne mora svaki portfelj imati i opis.
 
-**datum_otvaranja** odnosi se na datum stvaranja samog portfelja ite je time DATETIME.
+**datum_otvaranja** odnosi se na datum stvaranja samog portfelja, a atribut je tipa DATETIME.
 
 Ponovo, ON DELETE CASCADE će obrisati portfelj ako se obrisao investicijski račun kojemu pripada.
 
@@ -271,8 +271,8 @@ CREATE TABLE transakcija(
 ```
 
 Ova tablica vodi evidenciju o svim transakcijama nad imovinom unutar pojedinog investicijskog računa.
-
-**broj_naloga** ima istu funkciju kao i **broj_transakcije** iz tablice "uplata_isplata". Na konceptualnom ERD-u je to primarni ključ, no u SQL-u smo uveli surogat **id** kao primarni ključ baze, dok je **broj_naloga** (tipa VARCHAR) ostao kao ključ kandidat uz **UNIQUE** ograničenje koji služi korisničkoj strani za razlikovanje pojedinačnih transakcija.
+ 
+ Atribut **broj_naloga** (tipa VARCHAR) je ključ kandidat uz **UNIQUE** ograničenje koji služi korisničkoj strani za razlikovanje pojedinačnih transakcija.
 
 Atributi **kolicina**, **cijena**, **iznos** i **naknada** koriste tip **DECIMAL(38,18)** s ograničenjem **UNSIGNED**. Visoka preciznost od 18 decimalnih mjesta nužna je za ispravno praćenje mikro-udjela (frakcijske dionice ili kriptovalute), dok `UNSIGNED` sprječava unos negativnih iznosa.
 
