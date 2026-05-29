@@ -256,7 +256,7 @@ Atribut **id** je PRIMARY KEY tipa INT s obzirom na to da je riječ o brojčanoj
 CREATE TABLE transakcija(
   id INT PRIMARY KEY AUTO_INCREMENT,
   investicijski_racun_id INT NOT NULL,
-  imovina_id INT NOT NULL,
+  imovina_id INT,
   tip_transakcije_id INT NOT NULL,
   broj_naloga VARCHAR(45) NOT NULL UNIQUE,
   kolicina DECIMAL(38,18) UNSIGNED,
@@ -272,7 +272,7 @@ CREATE TABLE transakcija(
 
 Ova tablica vodi evidenciju o svim transakcijama nad imovinom unutar pojedinog investicijskog računa.
  
- Atribut **broj_naloga** (tipa VARCHAR) je ključ kandidat uz **UNIQUE** ograničenje koji služi korisničkoj strani za razlikovanje pojedinačnih transakcija.
+Atribut **broj_naloga** (tipa VARCHAR) je ključ kandidat uz **UNIQUE** ograničenje koji služi korisničkoj strani za razlikovanje pojedinačnih transakcija.
 
 Atributi **kolicina**, **cijena**, **iznos** i **naknada** koriste tip **DECIMAL(38,18)** s ograničenjem **UNSIGNED**. Visoka preciznost od 18 decimalnih mjesta nužna je za ispravno praćenje mikro-udjela (frakcijske dionice ili kriptovalute), dok `UNSIGNED` sprječava unos negativnih iznosa.
 
