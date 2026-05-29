@@ -77,7 +77,7 @@ CREATE TABLE tip_transakcije(
 CREATE TABLE transakcija(
   id INT PRIMARY KEY AUTO_INCREMENT,
   investicijski_racun_id INT NOT NULL,
-  imovina_id INT NOT NULL,
+  imovina_id INT,
   tip_transakcije_id INT NOT NULL,
   broj_naloga VARCHAR(45) NOT NULL UNIQUE,
   kolicina DECIMAL(38,18) UNSIGNED,
@@ -131,43 +131,35 @@ INSERT INTO tip_transakcije (id, tip) VALUES
 (2, 'Prodaja'),
 (3, 'Prijenos portfelja'),
 (4, 'Squeeze-out');
- 
+
+
 -- ==========================================
 -- 3. BANKA
--- IZMJENA: dodani swift_kod, oib, ulica_i_kucni_broj, postanski_broj, mjesto
+-- IZMJENA: isključivo hrvatske banke i podružnice (ukupno 20),
+-- usklađeno s OIB i poštanskim formatom.
 -- ==========================================
 INSERT INTO banka (id, ime, swift_kod, oib, ulica_i_kucni_broj, postanski_broj, mjesto) VALUES
-(1,  'Zagrebačka banka d.d.',                      'ZABAHR2X', '10010003623', 'Trg bana Josipa Jelačića 10', '10000', 'Zagreb'),
-(2,  'Privredna banka Zagreb d.d.',                'PBZGHR2X', '02535697732', 'Radnička cesta 50',           '10000', 'Zagreb'),
-(3,  'Erste & Steiermärkische Bank d.d.',          'ESBCHR22', '23057039320', 'Ivana Lučića 2',              '10000', 'Zagreb'),
-(4,  'OTP banka d.d.',                             'OTPVHR2X', '44189401993', 'Domovinskog rata 61',         '21000', 'Split'),
-(5,  'Raiffeisenbank Austria d.d.',                'RZBHHR2X', '53153927872', 'Petrinjska 59',               '10000', 'Zagreb'),
-(6,  'Hrvatska poštanska banka d.d.',              'HPBZHR2X', '87939104217', 'Jurišićeva 4',                '10000', 'Zagreb'),
-(7,  'KentBank d.d.',                              'KENTHR22', '72500276887', 'Slovenska 1',                 '10000', 'Zagreb'),
-(8,  'Agram Banka d.d.',                           'AGEBHR2X', '30150388862', 'Trg Drage Iblera 10',         '10000', 'Zagreb'),
-(9,  'Podravska banka d.d.',                       'PODBHR2X', '12345000001', 'Ante Starčevića 14a',         '48000', 'Koprivnica'),
-(10, 'Samoborska banka d.d.',                      'SAMBHR2X', '23456000002', 'Trg kralja Tomislava 5',      '10430', 'Samobor'),
-(11, 'Karlovačka banka d.d.',                      'KARBHR2X', '34567000003', 'Gažanski trg 1',              '47000', 'Karlovac'),
-(12, 'Istarska kreditna banka Umag d.d.',          'IKBUUR2X', '45678000004', 'Ernesta Miloša 1',            '52470', 'Umag'),
-(13, 'Croatia banka d.d.',                         'CROAHR22', '56789000005', 'Mihovljanska 14',             '10000', 'Zagreb'),
-(14, 'Partner banka d.d.',                         'PABKHR2X', '67890000006', 'Heinzelova 33',               '10000', 'Zagreb'),
-(15, 'BKS Bank AG - Glavna podružnica Hrvatska',   'BFKKAT2K', '78901000007', 'Trg Petra Preradovića 4',     '10000', 'Zagreb'),
-(16, 'Deutsche Bank AG',                           'DEUTDEDB', '89012000008', 'Taunusanlage 12',             '60325', 'Frankfurt'),
-(17, 'HSBC Holdings PLC',                          'HBUKGB4B', '90123000009', '8 Canada Square',             '10001', 'London'),
-(18, 'Goldman Sachs Group Inc.',                   'GSCOUSS1', '01234000010', '200 West Street',             '10282', 'New York'),
-(19, 'JPMorgan Chase & Co.',                       'CHASUS33', '11223000011', '383 Madison Avenue',          '10179', 'New York'),
-(20, 'Morgan Stanley',                             'MSNYUS33', '22334000012', '1585 Broadway',               '10036', 'New York'),
-(21, 'Citigroup Inc.',                             'CITIUS33', '33445000013', '388 Greenwich Street',        '10013', 'New York'),
-(22, 'UBS Group AG',                               'UBSWCHZH', '44556000014', 'Bahnhofstrasse 45',           '80010', 'Zürich'),
-(23, 'Barclays PLC',                               'BARCGB22', '55667000015', '1 Churchill Place',           '10002', 'London'),
-(24, 'BNP Paribas S.A.',                           'BNPAFRPP', '66778000016', '16 Boulevard des Italiens',   '75009', 'Pariz'),
-(25, 'Société Générale S.A.',                      'SOGEFRPP', '77889000017', '29 Boulevard Haussmann',      '75008', 'Pariz'),
-(26, 'Banco Santander S.A.',                       'BSCHESMM', '88990000018', 'Ciudad Grupo Santander',      '28660', 'Madrid'),
-(27, 'ING Groep N.V.',                             'INGBNL2A', '99001000019', 'Bijlmerplein 888',            '10120', 'Amsterdam'),
-(28, 'Bank of America Corp.',                      'BOFAUS3N', '10101000020', '100 North Tryon Street',      '28255', 'Charlotte'),
-(29, 'Wells Fargo & Co.',                          'WFBIUS6S', '20202000021', '420 Montgomery Street',       '94104', 'San Francisco'),
-(30, 'Commerzbank AG',                             'COBADEFF', '30303000022', 'Kaiserplatz 16',              '60311', 'Frankfurt');
- 
+(1,  'Zagrebačka banka d.d.',              'ZABAHR2X', '10010003623', 'Trg bana Josipa Jelačića 10', '10000', 'Zagreb'),
+(2,  'Privredna banka Zagreb d.d.',        'PBZGHR2X', '02535697732', 'Radnička cesta 50',           '10000', 'Zagreb'),
+(3,  'Erste & Steiermärkische Bank d.d.',  'ESBCHR22', '23057039320', 'Ivana Lučića 2',              '10000', 'Zagreb'),
+(4,  'OTP banka d.d.',                     'OTPVHR2X', '44189401993', 'Domovinskog rata 61',         '21000', 'Split'),
+(5,  'Raiffeisenbank Austria d.d.',        'RZBHHR2X', '53153927872', 'Petrinjska 59',               '10000', 'Zagreb'),
+(6,  'Hrvatska poštanska banka d.d.',      'HPBZHR2X', '87939104217', 'Jurišićeva 4',                '10000', 'Zagreb'),
+(7,  'KentBank d.d.',                      'KENTHR22', '72500276887', 'Slovenska 1',                 '10000', 'Zagreb'),
+(8,  'Agram Banka d.d.',                   'AGEBHR2X', '30150388862', 'Trg Drage Iblera 10',         '10000', 'Zagreb'),
+(9,  'Podravska banka d.d.',               'PODBHR2X', '12345000001', 'Ante Starčevića 14a',         '48000', 'Koprivnica'),
+(10, 'Samoborska banka d.d.',              'SAMBHR2X', '23456000002', 'Trg kralja Tomislava 5',      '10430', 'Samobor'),
+(11, 'Karlovačka banka d.d.',              'KARBHR2X', '34567000003', 'Gažanski trg 1',              '47000', 'Karlovac'),
+(12, 'Istarska kreditna banka Umag d.d.',  'IKBUUR2X', '45678000004', 'Ernesta Miloša 1',            '52470', 'Umag'),
+(13, 'Croatia banka d.d.',                 'CROAHR22', '56789000005', 'Mihovljanska 14',             '10000', 'Zagreb'),
+(14, 'Partner banka d.d.',                 'PABKHR2X', '67890000006', 'Heinzelova 33',               '10000', 'Zagreb'),
+(15, 'BKS Bank AG - Glavna podružnica HR', 'BFKKAT2K', '78901000007', 'Trg Petra Preradovića 4',     '10000', 'Zagreb'),
+(16, 'Addiko Bank d.d.',                   'HAABHR22', '89012000016', 'Slavonska avenija 6',         '10000', 'Zagreb'),
+(17, 'Slatinska banka d.d.',               'SLBCHR2X', '90123000017', 'Vladimira Nazora 2',          '33520', 'Slatina'),
+(18, 'Banka Kovanica d.d.',                'KVACHR22', '01234000018', 'Preradovićeva 29',            '42000', 'Varaždin'),
+(19, 'Imex banka d.d.',                    'IMXXHR22', '12345000019', 'Tolstojeva 6',                '21000', 'Split'),
+(20, 'J&T banka d.d.',                     'JTBPCH2X', '23456000020', 'Ulica grada Vukovara 23a',    '10000', 'Zagreb');
+
 -- ==========================================
 -- 4. KLIJENT (nepromijenjen)
 -- ==========================================
@@ -310,7 +302,7 @@ INSERT INTO imovina (id, ime, tip_imovine_id, oznaka_imovine) VALUES
 (29, 'iShares Core MSCI EM ETF',             3, 'IEMG'),
 (30, 'Ripple (XRP)',                         4, 'XRP');
  
--- ==========================================
+-- ========================================
 -- 9. TRANSAKCIJA
 -- IZMJENA: dodan iznos (NOT NULL); imovina_id bio citiran kao string
 -- iznos = kolicina * cijena
@@ -416,41 +408,7 @@ INSERT INTO povijesna_cijena_imovine (id, imovina_id, cijena, datum) VALUES
 (28, 11, 100.00,   '2021-01-01 09:00:00'),
 (29, 11, 100.50,   '2022-01-01 09:00:00'),
 (30, 11, 101.25,   '2023-01-01 09:00:00');
- 
--- ==========================================
--- 12. DIVIDENDA (nepromijenjen sadržaj)
--- ==========================================
-INSERT INTO dividenda (id, imovina_id, datum, iznos) VALUES
-(1,  1,  '2020-05-20 00:00:00', 1.10),
-(2,  1,  '2021-05-18 00:00:00', 1.20),
-(3,  1,  '2022-05-23 00:00:00', 1.30),
-(4,  1,  '2023-05-19 00:00:00', 1.40),
-(5,  2,  '2020-08-10 00:00:00', 2.50),
-(6,  2,  '2021-08-12 00:00:00', 2.70),
-(7,  2,  '2022-08-11 00:00:00', 3.00),
-(8,  2,  '2023-08-14 00:00:00', 3.20),
-(9,  3,  '2021-07-05 00:00:00', 4.00),
-(10, 3,  '2022-07-04 00:00:00', 4.20),
-(11, 3,  '2023-07-03 00:00:00', 4.50),
-(12, 7,  '2021-02-15 00:00:00', 0.22),
-(13, 7,  '2021-05-17 00:00:00', 0.22),
-(14, 7,  '2021-08-16 00:00:00', 0.22),
-(15, 7,  '2021-11-15 00:00:00', 0.22),
-(16, 7,  '2022-02-14 00:00:00', 0.23),
-(17, 7,  '2022-05-16 00:00:00', 0.23),
-(18, 7,  '2022-08-15 00:00:00', 0.23),
-(19, 7,  '2022-11-14 00:00:00', 0.23),
-(20, 8,  '2022-03-10 00:00:00', 0.62),
-(21, 8,  '2022-06-09 00:00:00', 0.62),
-(22, 8,  '2022-09-08 00:00:00', 0.62),
-(23, 8,  '2022-12-08 00:00:00', 0.68),
-(24, 26, '2023-02-10 00:00:00', 0.15),
-(25, 26, '2023-05-12 00:00:00', 0.15),
-(26, 26, '2023-08-11 00:00:00', 0.15),
-(27, 26, '2023-11-10 00:00:00', 0.15),
-(28, 6,  '2022-06-25 00:00:00', 1.50),
-(29, 6,  '2023-06-28 00:00:00', 1.80),
-(30, 5,  '2023-07-15 00:00:00', 5.00);
+
  
 -- ==============================================================================
 -- UPITI
