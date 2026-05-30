@@ -6,23 +6,57 @@
 
 #### 1. OPIS PROJEKTA
 
-Sustav modelira proces investicijskog bankarstva za građane, omogućujući upravljanje korisnicima, njihovim investicijskim računima te ulaganjima u različite financijske instrumente. Sustav služi kao baza podataka za mobilnu aplikaciju koju svakodnevno koriste mali investitori odnosno građani.
+Ovaj projekt prošao je kroz nekoliko iteracija — kako su se naše znanje i vještine stečene tijekom semestra nadograđivali, tako smo i sam model baze podataka postupno dorađivali i poboljšavali. Izradili smo bazu podataka pod nazivom „Sustav za upravljanje investicijskim bankarstvom" kojom nastojimo što vjernije, ali i dovoljno pojednostavljeno, opisati poslovni proces investicijskog bankarstva za građane. Sustav je zamišljen kao baza podataka za mobilnu aplikaciju koju svakodnevno koriste mali investitori, odnosno građani.
+  
+Krajnji cilj je modelirati cjelovit investicijski ciklus: od registracije klijenta (tj. unosa osobnih podataka) i otvaranja investicijskih računa, preko grupiranja ulaganja u portfelje i trgovanja različitim vrstama imovine, do praćenja transakcija i povijesti tržišnih cijena.
 
-Ova verzija sustava znatno je pojednostavljena radi prirode projekta, ali se iz iste mogu izvući relevatni podaci i način funkcioniranja samog sustava. Važno za naglasiti - sustav se fokusira na područje RH i samim time pretpostavlja isključivo iznose u eurima. Ovaj pojednostavljeni sustav nije predviđen da podržava druge valute.
+Naša je baza tek djelić onoga što bi pravi sustav ove vrste obuhvaćao te smo ju za potrebe projekta morali reducirati i precizno specificirati. Tako se sustav fokusira isključivo na područje Republike Hrvatske i pretpostavlja iznose isključivo u eurima, dok je sam proces registracije te pohrane korisničkog imena i lozinke namjerno izostavljen kako projekt ne bi nepotrebno previše narastao.
 
-Proces započinje registracijom klijenta u sustav, pri čemu se pohranjuju osnovni osobni podaci. Sami proces registracije i spremanja korisničkog imena i lozinke je preskočen da bismo zadržali projekt u potrebnim granicama.
-Nakon registracije ili prijave u sustav, klijent može otvoriti jedan ili više investicijskih računa u odabranoj banci. Svaki investicijski račun pripada točno jednom klijentu i jednoj banci.
+Svi podaci kojima smo napunili bazu (imena, OIB-ovi, IBAN-i, nazivi imovine i slično) generirani su nasumično, uz pomoć velikih jezičnih modela, te ne predstavljaju stvarne osobe ni institucije. Konceptualni model prikazan je ER dijagramom, dok je EER dijagram (logička shema) generiran u MySQL Workbenchu, a svaka tablica, ograničenje i upit detaljno su opisani u narednim poglavljima.
 
-To bi značilo da unutar investicijskog računa klijent može kreirati jedan ili više portfelja koji predstavljaju skupove ulaganja.
-Svaki portfelj može sadržavati više različitih vrsta imovine, poput dionica, fondova, indeksa, obveznica, kriptovaluta i slično. Odnos između portfelja i imovine je višestruk (M:N), što znači da jedan portfelj može sadržavati više vrsta imovine, a ista imovina može biti dio više portfelja različitih klijenata.
+#### 1.1 OPIS POSLOVNOG PROCESA
 
-Uplata, isplata, kupnja i prodaja imovine te dividende i naknade evidentiraju se kroz transakcije koje su povezane s investicijskim računom i konkretnom imovinom. Svaka transakcija ima definirani tip (npr. kupnja, prodaja, uplata, isplata ili dividenda), količinu i cijenu, iznos te datum čime se omogućuje praćenje aktivnosti ulaganja.
+U sustavu se prati proces ulaganja građana u financijske instrumente. Poslovni proces započinje evidencijom klijenta, pri čemu se za svakog klijenta prati ime, prezime, OIB, email, telefon te adresa (ulica i kućni broj, poštanski broj i mjesto), gdje adresa predstavlja **kompozitni atribut**.
 
-Za svaku imovinu sustav bilježi povijest cijena kroz vrijeme, što omogućuje analizu kretanja vrijednosti portfelja i izračun prinosa.
+Klijent u sustavu otvara jedan ili više investicijskih računa, dok pojedini investicijski račun pripada točno jednom klijentu i točno jednoj banci (kardinalnost **one-to-many** uz **potpunu uključenost** sa strane računa).
 
-Klasifikacija imovine i transakcija ostvarena je putem zasebnih pomoćnih (lookup) tablica, čime se osigurava konzistentnost i proširivost sustava.
+Za svaki investicijski račun prati se broj računa (IBAN), stanje i datum otvaranja. Za svaku banku koja upravlja barem jednim računom prati se ime, SWIFT kod, OIB i adresa.
 
-Na taj način sustav omogućuje cjelovito praćenje investicijskog ciklusa - od unosa klijenta i upravljanja računima, preko ulaganja i transakcija, do analize tržišnih podataka i ostvarivanja prihoda.
+Unutar investicijskog računa klijent kreira jedan ili više portfelja koji služe grupiranju ulaganja. Svaki portfelj pripada točno jednom investicijskom računu (**one-to-many**, **potpuna uključenost**), a za njega se prati ime, sklonost riziku, opis i datum otvaranja.
+
+Portfelj može sadržavati više različitih imovina, a ista imovina može biti dio više portfelja, čime je riječ o vezi tipa **many-to-many (M:N)**. Količina pojedine imovine unutar portfelja modelirana je kao **opisni atribut** te veze. Za svaku imovinu prati se ime, oznaka imovine te tip imovine, pri čemu svaka imovina mora biti klasificirana pod točno jedan tip imovine (**one-to-many**, **potpuna uključenost**). Tip imovine (npr. dionica, fond, obveznica, kriptovaluta...) opisan je vrstom, dodatnim opisom i razinom rizika te predstavlja **pomoćnu (lookup) tablicu**.
+
+Za svaku imovinu sustav vodi povijest cijena kroz vrijeme. Povijesna cijena imovine je **slabi entitet** čije postojanje egzistencijalno ovisi o **jakom entitetu** imovina te se s njime nalazi u identifikacijskoj vezi (**one-to-many** uz **potpunu uključenost**). Njezin **parcijalni ključ** (diskriminator) predstavljen je atributom datum, a uz njega se prati i cijena.
+
+Sve aktivnosti na računu — uplata, isplata, kupnja i prodaja imovine te dividende i naknade — evidentiraju se kroz transakcije. Svaka transakcija veže se za točno jedan investicijski račun (**one-to-many**, **potpuna uključenost**), a za nju se prati količina, cijena, iznos, naknada, datum i broj naloga. Svaka transakcija ima točno jedan tip transakcije (npr. kupovina, prodaja, uplata, isplata ili dividenda), gdje tip transakcije predstavlja **pomoćnu (lookup) tablicu**. Transakcija se može, ali i ne mora odnositi na pojedinu imovinu (**djelomična uključenost**), budući da uplate i isplate ne uključuju nikakvu imovinu, a moguće je i da neka novododana imovina još nije imala nijednu transakciju.
+
+Klasifikacija imovine i transakcija ostvarena je putem zasebnih **pomoćnih (lookup) tablica** (tip_imovine i tip_transakcije), čime se osigurava konzistentnost i proširivost sustava. Na taj način sustav omogućuje cjelovito praćenje investicijskog ciklusa — od unosa klijenta i upravljanja računima, preko ulaganja i transakcija, do analize tržišnih podataka i ostvarivanja prihoda.
+
+#### 1.2 PRIMJER IZ PRAKSE
+
+Kako bi gore opisani poslovni proces bio što zorniji, u nastavku ga pratimo kroz jedan tipičan scenarij korištenja mobilne aplikacije iz perspektive korisnika. Pretpostavimo da Ana Anić, mlada inženjerka iz Pule, želi početi ulagati svoju ušteđevinu.
+
+**1. Registracija (unos klijenta).** Ana preuzima aplikaciju i ispunjava obrazac sa svojim osobnim podacima — imenom, prezimenom, OIB-om, e-mailom, telefonom i adresom stanovanja. Potvrdom obrasca u tablicu **klijent** zapisuje se novi redak s Aninim podacima. (Napomena: sam mehanizam prijave putem korisničkog imena i lozinke namjerno je izostavljen iz opsega projekta — u našem modelu „registracija" znači evidenciju osobnih podataka klijenta.)
+
+**2. Otvaranje investicijskog računa.** Da bi mogla ulagati, Ana unutar aplikacije otvara investicijski račun pri odabranoj banci (npr. Zagrebačka banka). Time nastaje novi redak u tablici **investicijski_racun**, koji preko stranih ključeva povezuje Anu (klijent) i njezinu banku. Račun na početku ima `stanje` od 0,00 € i zabilježeni `datum_otvaranja`. Ana može, ako poželi, otvoriti i dodatne račune kod drugih banaka.
+
+**3. Uplata sredstava.** Ana sa svog tekućeg računa uplaćuje 5.000 € na novootvoreni investicijski račun. Ova se uplata bilježi kao redak u tablici **transakcija** s tipom „uplata" (iz lookup tablice **tip_transakcije**). Budući da uplata ne uključuje nikakvu imovinu, atribut `imovina_id` ostaje `NULL`, dok se `stanje` na investicijskom računu povećava na 5.000 €.
+
+**4. Kreiranje portfelja.** Ana želi razdvojiti svoja ulaganja prema riziku pa kreira dva portfelja unutar svog računa — npr. „Sigurna mirovina" (`sklonost_riziku` = niska) i „Agresivni rast" (`sklonost_riziku` = visoka). Svaki od njih zapisuje se kao redak u tablici **portfelj**, vezan za njezin investicijski račun.
+
+**5. Razmatranje kupnje (uvid u kretanje cijene).** Prije nego što se odluči na kupnju, Ana želi procijeniti isplati li joj se ulaganje. Aplikacija joj zato na zaslonu pojedine imovine prikazuje povijesni graf cijene, koji se gradi iz svih zapisa vezanih uz tu imovinu u tablici **povijesna_cijena_imovine** (svaki redak nosi `cijena` i pripadajući `datum`). Tako Ana može vidjeti kako se cijena dionice Apple kretala kroz vrijeme — je li u uzlaznom ili silaznom trendu, koliko je volatilna te po kojoj se cijeni trenutačno trguje — i na temelju toga donijeti informiranu odluku.
+
+**6. Kupnja imovine.** Uvjerena u svoju odluku, u portfelju „Agresivni rast" Ana kupuje 3 dionice tvrtke Apple (oznaka AAPL). Aplikacija dohvaća aktualnu cijenu imovine iz tablice **imovina** (te njezinu cijenu iz **povijesna_cijena_imovine** - gleda se cijena imovine na datum kupnje) i izvršava kupnju. Pritom se događa nekoliko stvari odjednom:
+
+- u tablicu **transakcija** upisuje se redak s tipom „kupovina", popunjenim atributima `kolicina`, `cijena`, `iznos` i `naknada` te referencom na kupljenu imovinu (`imovina_id`)
+- `stanje` na investicijskom računu umanjuje se za ukupan iznos kupnje uvećan za naknadu
+- u tablici **portfelj_imovina** evidentira se da portfelj „Agresivni rast" sada sadrži 3 jedinice imovine AAPL (atribut `kolicina`)
+
+**7. Pregled portfelja.** Kad se Ana kasnije vrati u aplikaciju, na zaslonu „Moji portfelji" vidi pregled svojih ulaganja. Aplikacija u pozadini spaja podatke iz tablica **portfelj**, **portfelj_imovina** i **imovina**, a trenutnu vrijednost svake stavke računa množeći Aninu `kolicinu` s posljednjom poznatom cijenom iz tablice **povijesna_cijena_imovine**. Tako Ana u svakom trenutku vidi koliko koje imovine posjeduje i koliko ona danas vrijedi.
+
+**8. Daljnje aktivnosti.** S vremenom Ana može dokupljivati ili prodavati imovinu (nove transakcije tipa „kupovina"/„prodaja"), primati dividende (transakcija tipa „dividenda" koja povećava `stanje`) ili podići dio sredstava (transakcija tipa „isplata"). Svaka takva aktivnost ostavlja trag u tablici **transakcija**, čime sustav vodi potpunu povijest Aninog investicijskog ciklusa.
+
+Ovaj primjer pokazuje kako naizgled jednostavne korisničke radnje — registracija, uplata, kupnja i pregled portfelja — u pozadini pokreću usklađen niz unosa i izmjena u međusobno povezanim tablicama, što je upravo ono što naš model baze podataka nastoji vjerno opisati.
 
 #### 2. ER dijagram
 
@@ -30,15 +64,15 @@ Na taj način sustav omogućuje cjelovito praćenje investicijskog ciklusa - od 
 
 #### 3. OPIS ER DIJAGRAMA
 
-1. **klijent** i **investicijski_racun** su u vezi tipa **one-to-many (1:M)**. Jedan klijent može posjedovati više investicijskih računa, dok pojedini investicijski račun pripada točno jednom klijentu. Veza je sa strane investicijskog računa **potpuno uključena (totalna participacija)**, što znači da je pri unosu računa obavezno definirati pripadajućeg klijenta. Atribut adresa je kompozitni atribut. 
-2. **banka** i **investicijski_racun** su u vezi tipa **one-to-many (1:M)**. Jedna banka može upravljati većim brojem investicijskih računa, dok pojedini investicijski račun pripada točno jednoj banci. Veza je sa strane investicijskog računa **potpuno uključena** jer svaki račun mora biti otvoren unutar jedne konkretne banke. Atribut adresa je kompozitni atribut. 
+1. **klijent** i **investicijski_racun** su u vezi tipa **one-to-many (1:M)**. Jedan klijent može posjedovati više investicijskih računa, dok pojedini investicijski račun pripada točno jednom klijentu. Veza je sa strane investicijskog računa **potpuno uključena (totalna participacija)**, što znači da je pri unosu računa obavezno definirati pripadajućeg klijenta. Atribut adresa je kompozitni atribut.
+2. **banka** i **investicijski_racun** su u vezi tipa **one-to-many (1:M)**. Jedna banka može upravljati većim brojem investicijskih računa, dok pojedini investicijski račun pripada točno jednoj banci. Veza je sa strane investicijskog računa **potpuno uključena** jer svaki račun mora biti otvoren unutar jedne konkretne banke. Atribut adresa je kompozitni atribut.
 3. **investicijski_racun** i **portfelj** su u vezi tipa **one-to-many (1:M)**. Jedan investicijski račun može sadržavati više portfelja, dok pojedini portfelj pripada točno jednom investicijskom računu. Veza je sa strane portfelja **potpuno uključena** jer je portfelj nužno vezan za krovni investicijski račun.
 4. **portfelj** i **imovina** su u vezi tipa **many-to-many (M:N)**. Jedan portfelj može sadržavati više različitih imovina, a ista imovina može biti dio više različitih portfelja. Budući da je riječ o **many-to-many** vezi, količina imovine unutar pojedinog portfelja modelirana je kao **opisni atribut** ove veze.
 5. **tip_imovine** i **imovina** su u vezi tipa **one-to-many (1:M)**. Jedan tip imovine kategorizira više različitih imovina, dok pojedina imovina pripada točno jednom tipu imovine. Veza je sa strane imovine **potpuno uključena** jer svaka imovina mora biti klasificirana pod jedan definiran tip.
 6. **imovina** i **povijesna_cijena_imovine** su u **identifikacijskoj vezi** tipa **one-to-many (1:M)**. Povijesna cijena je prirodno **slabi skup entiteta** čije postojanje egzistencijalno ovisi o jakom skupu entiteta imovina, a njezin parcijalni ključ (**diskriminator**) je predstavljen atributom datum. Slabi entitet podrazumijeva i potpunu uključenost.
-7. **tip_transakcije** i **transakcija** su u vezi tipa **one-to-many (1:M)**. Jedan tip transakcije definira vrstu za više različitih transakcija, dok pojedina transakcija ima točno jedan definiran tip. Veza je sa strane transakcije **potpuno uključena** jer svaka transakcija mora imati određenu vrstu (npr. kupovina, prodaja itd.). 
+7. **tip_transakcije** i **transakcija** su u vezi tipa **one-to-many (1:M)**. Jedan tip transakcije definira vrstu za više različitih transakcija, dok pojedina transakcija ima točno jedan definiran tip. Veza je sa strane transakcije **potpuno uključena** jer svaka transakcija mora imati određenu vrstu (npr. kupovina, prodaja itd.).
 8. **imovina** i **transakcija** su u vezi tipa **one-to-many (1:M)**. Nad jednom imovinom može se izvršiti više različitih transakcija, dok se pojedina transakcija odnosi na najviše jednu imovinu. Veza sa strane entiteta transakcija u ovoj vezi je **djelomično uključena** (partial participation), što omogućuje postojanje transakcija (poput uplata i isplata) koje nisu povezane niti s jednom instancom imovine. Veza sa strane imovine je također **djelomično uključena** jer je moguće da neka imovina još uvijek nije imala niti jednu transakciju (npr. nova imovina koja je tek dodana u sustav).
-9.  **investicijski_racun** i **transakcija** su u vezi tipa **one-to-many (1:M)**. Na jednom investicijskom računu može se izvršiti više transakcija, dok se svaka pojedinačna transakcija veže za točno jedan investicijski račun. Veza je sa strane transakcije **potpuno uključena** jer svaka transakcija mora teretiti ili odobravati točno određeni investicijski račun.
+9. **investicijski_racun** i **transakcija** su u vezi tipa **one-to-many (1:M)**. Na jednom investicijskom računu može se izvršiti više transakcija, dok se svaka pojedinačna transakcija veže za točno jedan investicijski račun. Veza je sa strane transakcije **potpuno uključena** jer svaka transakcija mora teretiti ili odobravati točno određeni investicijski račun.
 
 ---
 
@@ -47,17 +81,16 @@ Na taj način sustav omogućuje cjelovito praćenje investicijskog ciklusa - od 
 U fazi relacijskog modeliranja uvodimo surogatne ključeve za sve entitete radi optimizacije performansi i lakše implementacije u SQL-u.
 *(Napomena: **Podebljani** atributi su primarni ključevi, a *kosi* atributi su strani ključevi).*
 
-* **klijent** (**klijent_id**, ime, prezime, OIB, email, telefon, ulica_i_kucni_broj, postanski_broj, mjesto)
-* **banka** (**banka_id**, ime, swift_kod, ulica_i_kucni_broj, postanski_broj, mjesto, oib)
-* **investicijski_racun** (**investicijski_racun_id**, *klijent_id*, *banka_id*, broj_racuna, stanje, datum_otvaranja)
-*  **portfelj** (**portfelj_id**, *investicijski_racun_id*, ime, sklonost_riziku, opis_portfelja, datum_otvaranja)
-* **imovina** (**imovina_id**, ime, *tip_imovine_id*, oznaka_imovine)
-* **portfelj_imovina** (**portfelj_imovina_id**, *portfelj_id*, *imovina_id*, kolicina)
-* **povijesna_cijena_imovine** (**povijesna_cijena_imovine_id**, *imovina_id*, cijena, datum)
-* **tip_imovine** (**tip_imovine_id**, tip, dodatan_opis_imovine, razina_rizika)
-* **transakcija** (**transakcija_id**, *investicijski_racun_id*, *imovina_id*, *tip_transakcije_id*, kolicina, cijena, naknada, iznos, datum, broj_naloga)
-* **tip_transakcije** (**tip_transakcije_id**, tip, opis_transakcije)
-
+- **klijent** (**klijent_id**, ime, prezime, OIB, email, telefon, ulica_i_kucni_broj, postanski_broj, mjesto)
+- **banka** (**banka_id**, ime, swift_kod, ulica_i_kucni_broj, postanski_broj, mjesto, oib)
+- **investicijski_racun** (**investicijski_racun_id**, *klijent_id*, *banka_id*, broj_racuna, stanje, datum_otvaranja)
+- **portfelj** (**portfelj_id**, *investicijski_racun_id*, ime, sklonost_riziku, opis_portfelja, datum_otvaranja)
+- **imovina** (**imovina_id**, ime, *tip_imovine_id*, oznaka_imovine)
+- **portfelj_imovina** (**portfelj_imovina_id**, *portfelj_id*, *imovina_id*, kolicina)
+- **povijesna_cijena_imovine** (**povijesna_cijena_imovine_id**, *imovina_id*, cijena, datum)
+- **tip_imovine** (**tip_imovine_id**, tip, dodatan_opis_imovine, razina_rizika)
+- **transakcija** (**transakcija_id**, *investicijski_racun_id*, *imovina_id*, *tip_transakcije_id*, kolicina, cijena, naknada, iznos, datum, broj_naloga)
+- **tip_transakcije** (**tip_transakcije_id**, tip, opis_transakcije)
 
 #### 5. EER
 
@@ -271,7 +304,7 @@ CREATE TABLE transakcija(
 ```
 
 Ova tablica vodi evidenciju o svim transakcijama nad imovinom unutar pojedinog investicijskog računa.
- 
+
 Atribut **broj_naloga** (tipa VARCHAR) je ključ kandidat uz **UNIQUE** ograničenje koji služi korisničkoj strani za razlikovanje pojedinačnih transakcija.
 
 Atributi **kolicina**, **cijena**, **iznos** i **naknada** koriste tip **DECIMAL(38,18)** s ograničenjem **UNSIGNED**. Visoka preciznost od 18 decimalnih mjesta nužna je za ispravno praćenje mikro-udjela (frakcijske dionice ili kriptovalute), dok `UNSIGNED` sprječava unos negativnih iznosa.
@@ -324,9 +357,7 @@ Atribut **cijena** služi za evidentiranje cijene pojedine imovine u danom trenu
 
 Strani ključ **imovina_id** povezuje tablicu s tablicom "imovina", odnosno povezuje određenu cijenu s pojedinom imovinom.
 
-
 #### 7. OPISI UPITA I POGLEDA
-
 
 #### 8. ZAKLJUČAK
 
@@ -337,6 +368,3 @@ Da baza zaista funkcionira, demonstrirali smo predstavljenim upitima i pogledima
 Međutim, svjesni smo kako prostora za napredak uvijek ima. Neki od mogućih daljnih koraka za unapređenje same baze bi bili: dodavanje SQL transakcija kako bi se zajamčilo pouzdana obrada podataka i smanjila mogućnost grešaka, dodavanje drugih valuta te mogućnost pretvorbe između njih, ali i banaka izvan Republike Hrvatske, što je bilo naše prvotno ograničenje.
 
 U izradi ER dijagrama koristili smo notaciju kakva je korištena u sklopu nastave kolegija, a u dokumentaciji smo nastojali rabiti terminologiju s predavanja, odnosno vježbi. EER dijagram je izrađen u **MySQL Workbenchu**, a za crtanje ERD-a smo upotrebljavali softver **Lucidchart**. Projekt smo osmislili i dogovarali na platformi **Discord**, a zajedno smo radili na njemu u repozitoriju na **GitHubu**. Držimo da smo uspješno odradili zadatak te pritom poštovali važeća pravila.
-
-
-
