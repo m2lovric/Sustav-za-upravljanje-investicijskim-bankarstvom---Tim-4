@@ -361,6 +361,196 @@ Strani ključ **imovina_id** povezuje tablicu s tablicom "imovina", odnosno pove
 
 #### 7. OPISI UPITA I POGLEDA
 
+#### 7.1 POVIJEST TRANSAKCIJA (POGLED)
+
+```sql
+-- U mobilnoj aplikaciji klijent na zaslonu "Povijest" želi
+-- vidjeti čitljiv popis svih svojih aktivnosti na računu (kupnje, prodaje,
+-- uplate, isplate...). Umjesto da aplikacija svaki put ručno spaja 7 tablica,
+-- definiramo pogled koji vraća već spremne, ljudski čitljive retke: tko, na
+-- kojem računu, preko koje banke, koju imovinu, kojeg tipa transakcije, u kojoj
+-- količini, po kojoj cijeni, koliki iznos i naknada te kada.
+
+CREATE OR REPLACE VIEW povijest_transakcija AS
+SELECT
+    t.id                          AS transakcija_id,
+    t.datum                       AS datum,
+    k.ime                         AS ime,
+    k.prezime                     AS prezime,
+    r.broj_racuna                 AS broj_racuna,
+    b.ime                         AS banka,
+    tt.tip                        AS tip_transakcije,
+    COALESCE(i.ime, '-')          AS imovina,
+    COALESCE(ti.tip, '-')         AS klasa_imovine,
+    t.kolicina                    AS kolicina,
+    t.cijena                      AS cijena,
+    t.iznos                       AS iznos,
+    t.naknada                     AS naknada,
+    t.broj_naloga                 AS broj_naloga
+FROM transakcija          AS t
+JOIN investicijski_racun  AS r  ON t.investicijski_racun_id = r.id
+JOIN klijent              AS k  ON r.klijent_id = k.id
+JOIN banka                AS b  ON r.banka_id = b.id
+JOIN tip_transakcije      AS tt ON t.tip_transakcije_id = tt.id
+LEFT JOIN imovina         AS i  ON t.imovina_id = i.id
+LEFT JOIN tip_imovine     AS ti ON i.tip_imovine_id = ti.id;
+
+-- cijela povijest, najnovije prvo
+SELECT * FROM povijest_transakcija
+ORDER BY datum DESC;
+
+-- povijest jednog klijenta
+SELECT datum, tip_transakcije, imovina, kolicina, cijena, iznos, naknada
+FROM povijest_transakcija
+WHERE ime = 'Ivan' AND prezime = 'Horvat'
+ORDER BY datum DESC;
+```
+
+#### 7.2. POVIJESNI PREGLED CIJENE IMOVINE (POGLED)
+
+```sql
+-- Prije kupnje klijent na zaslonu pojedine imovine gleda
+-- povijesni graf cijene da procijeni trend i volatilnost. Ovaj pogled za svaki
+-- zapis cijene daje čitljiv redak: koja imovina, kojeg tipa, koja cijena na koji
+-- datum, te promjena u odnosu na prethodni zabiljezeni zapis (apsolutna i %).
+
+CREATE OR REPLACE VIEW povijest_cijena_imovine AS
+SELECT
+    podaci_imovina.imovina,
+    podaci_imovina.oznaka,
+    podaci_imovina.klasa_imovine,
+    podaci_imovina.razina_rizika,
+    podaci_imovina.datum,
+    podaci_imovina.cijena,
+    podaci_imovina.prethodna_cijena,
+    ROUND(podaci_imovina.cijena - podaci_imovina.prethodna_cijena, 2)                               AS promjena,
+    ROUND((podaci_imovina.cijena - podaci_imovina.prethodna_cijena) / podaci_imovina.prethodna_cijena * 100, 2) AS promjena_postotak
+FROM (
+    SELECT
+        i.ime              AS imovina,
+        i.oznaka_imovine   AS oznaka,
+        ti.tip             AS klasa_imovine,
+        ti.razina_rizika   AS razina_rizika,
+        pci.datum          AS datum,
+        pci.cijena         AS cijena,
+        -- prethodna zabilježena cijena iste imovine (korelirani podupit)
+        (SELECT p2.cijena
+          FROM povijesna_cijena_imovine AS p2
+          WHERE p2.imovina_id = pci.imovina_id
+            AND p2.datum < pci.datum
+          ORDER BY p2.datum DESC
+          LIMIT 1)
+        AS prethodna_cijena
+    FROM imovina                  AS i
+    JOIN tip_imovine              AS ti  ON i.tip_imovine_id = ti.id
+    JOIN povijesna_cijena_imovine AS pci ON i.id = pci.imovina_id
+) AS podaci_imovina;
+
+-- cijeli graf cijene jedne imovine, kronoloski
+SELECT datum, cijena, prethodna_cijena, promjena, promjena_postotak
+FROM povijest_cijena_imovine
+WHERE oznaka = 'AAPL'
+ORDER BY datum ASC;
+
+-- najveći dnevni skokovi cijene na cijeloj platformi
+SELECT imovina, datum, cijena, promjena_postotak
+FROM povijest_cijena_imovine
+WHERE promjena_postotak IS NOT NULL
+ORDER BY promjena_postotak DESC
+LIMIT 10;
+```
+
+#### 7.3. NATPROSJEČNI INVESTITORI (UPIT)
+
+```sql
+-- Odjel za odnose s klijentima želi pokrenuti
+-- VIP marketinšku kampanju. Potrebno je izdvojiti klijente čija 
+-- je prosječna vrijednost kupoprodajne transakcije veća od prosjeka
+-- na cijeloj platformi - to su "natprosječni" investitori. 
+-- Za svakog se prikazuje profil trgovanja (broj transakcija, 
+-- prosječna te najmanja i najveća transakcija) i banka preko koje 
+-- posluju. Budući da kampanja cilja najvrjednije korisnike, 
+-- prikazuje se top 10 takvih klijenata poredanih po ukupnoj vrijednosti 
+-- portfelja, kako bi im se poslale personalizirane ponude.
+
+WITH
+-- CTE - najnovija cijena svake imovine
+trenutna_cijena AS (
+    SELECT pci.imovina_id, pci.cijena
+    FROM povijesna_cijena_imovine AS pci
+    WHERE pci.datum = (
+        SELECT MAX(pci2.datum)
+        FROM povijesna_cijena_imovine AS pci2
+        WHERE pci2.imovina_id = pci.imovina_id
+    )
+),
+-- CTE - vrijednost portfelja po klijentu
+portfelj_vrijednost AS (
+    SELECT r.klijent_id,
+           COALESCE(SUM(pi.kolicina * tc.cijena), 0) AS vrijednost_portfelja
+    FROM investicijski_racun AS r
+    LEFT JOIN portfelj         AS p  ON r.id = p.investicijski_racun_id
+    LEFT JOIN portfelj_imovina AS pi ON p.id = pi.portfelj_id
+    LEFT JOIN trenutna_cijena  AS tc ON pi.imovina_id = tc.imovina_id
+    GROUP BY r.klijent_id
+)
+SELECT
+    k.ime, k.prezime, k.mjesto,
+    b.mjesto                                   AS sjediste_banke,
+    b.ime                                      AS banka,
+    COUNT(t.id)                                AS broj_transakcija,
+    ROUND(AVG(t.iznos), 2)                     AS prosjecna_transakcija,
+    MIN(t.iznos)                               AS najmanja_transakcija,
+    MAX(t.iznos)                               AS najveca_transakcija,
+    pv.vrijednost_portfelja,
+    CASE
+        WHEN pv.vrijednost_portfelja >= 100000 THEN 'Premium'
+        WHEN pv.vrijednost_portfelja >= 10000  THEN 'Standard'
+        ELSE 'Osnovni'
+    END                                        AS rang
+FROM klijent              AS k
+JOIN investicijski_racun  AS r  ON k.id = r.klijent_id
+JOIN banka                AS b  ON r.banka_id = b.id
+JOIN transakcija          AS t  ON r.id = t.investicijski_racun_id
+JOIN portfelj_vrijednost  AS pv ON k.id = pv.klijent_id
+WHERE t.tip_transakcije_id IN (
+        SELECT id FROM tip_transakcije WHERE tip IN ('kupnja', 'prodaja')
+      )
+  AND k.email LIKE '%@email.com'
+GROUP BY k.id, k.ime, k.prezime, k.mjesto, b.mjesto, b.ime, pv.vrijednost_portfelja
+HAVING AVG(t.iznos) > (
+        SELECT AVG(iznos) FROM transakcija
+      )
+ORDER BY pv.vrijednost_portfelja DESC, prosjecna_transakcija DESC
+LIMIT 10;
+```
+
+#### 7.4. GODIŠNJI TREND TRGOVANJA PO KLASI IMOVINE (UPIT)
+
+```sql
+-- Odjel analitike trzista treba strateski pregled kako se
+-- kroz godine mijenjao interes investitora za pojedine klase imovine (dionice,
+-- kripto, obveznice, ETF-ovi...). Za svaku kombinaciju godine i tipa imovine
+-- prikazuje se broj transakcija, broj razlicitih aktivnih klijenata, ukupan
+-- promet i prosjecna transakcija. Kombinacije s prometom manjim od 100 EUR
+-- smatraju se beznacajnima i izbacuju se iz izvjestaja.
+
+SELECT
+    YEAR(t.datum)                 AS godina,
+    ti.tip                        AS klasa_imovine,
+    COUNT(t.id)                   AS broj_transakcija,
+    COUNT(DISTINCT r.klijent_id)  AS broj_aktivnih_klijenata,
+    ROUND(SUM(t.iznos), 2)        AS ukupni_promet,
+    ROUND(AVG(t.iznos), 2)        AS prosjecna_transakcija
+FROM transakcija          AS t
+JOIN investicijski_racun  AS r  ON t.investicijski_racun_id = r.id
+JOIN imovina              AS i  ON t.imovina_id = i.id
+JOIN tip_imovine          AS ti ON i.tip_imovine_id = ti.id
+GROUP BY YEAR(t.datum), ti.tip
+HAVING SUM(t.iznos) > 100
+ORDER BY godina DESC, ukupni_promet DESC;
+```
+
 #### 8. ZAKLJUČAK
 
 Kao što je objašnjeno u uvodnome dijelu, izradili smo tek pojednostavljenu inačicu sustava za upravljanje investicijskim bankarstvom za građane. Usprkos tome, riječ je o posve funkcionalnoj bazi, koju smo napunili podacima generiranim velikim jezičnim modelima.
