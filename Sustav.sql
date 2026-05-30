@@ -123,14 +123,17 @@ INSERT INTO tip_imovine (id, tip, razina_rizika) VALUES
 (5, 'Investicijski fond',         'srednji'),
 (6, 'Novčani instrumenti',        'nizak');
  
+
 -- ==========================================
--- 2. TIP TRANSAKCIJE (nepromijenjen)
+-- 2. TIP TRANSAKCIJE
+-- IZMJENA: dodano uplata, isplata, kupnja, prodaja, dividenda
 -- ==========================================
-INSERT INTO tip_transakcije (id, tip) VALUES
-(1, 'Kupnja'),
-(2, 'Prodaja'),
-(3, 'Prijenos portfelja'),
-(4, 'Squeeze-out');
+INSERT INTO tip_transakcije (id, tip, opis_transakcije) VALUES
+(1, 'Uplata', 'Uplata novčanih sredstava na investicijski račun'),
+(2, 'Isplata', 'Isplata novčanih sredstava s investicijskog računa'),
+(3, 'Kupnja', 'Kupnja financijske imovine (dionice, kripto, itd.)'),
+(4, 'Prodaja', 'Prodaja financijske imovine'),
+(5, 'Dividenda', 'Isplata dividende za posjedovanu imovinu');
 
 
 -- ==========================================
@@ -302,43 +305,57 @@ INSERT INTO imovina (id, ime, tip_imovine_id, oznaka_imovine) VALUES
 (29, 'iShares Core MSCI EM ETF',             3, 'IEMG'),
 (30, 'Ripple (XRP)',                         4, 'XRP');
  
--- ========================================
+
+-- ==========================================
 -- 9. TRANSAKCIJA
--- IZMJENA: dodan iznos (NOT NULL); imovina_id bio citiran kao string
--- iznos = kolicina * cijena
+-- IZMJENA: Prialgodjen skup podataka.
+-- Uplate i isplate imaju NULL za imovina_id, kolicinu i cijenu (jer se tiču samo novca).
+-- Dividende imaju NULL za kolicinu i cijenu, ali imaju imovina_id. 
+-- Kupnje i prodaje imaju sve atribute popunjene i izračunate.
 -- ==========================================
 INSERT INTO transakcija (id, investicijski_racun_id, imovina_id, tip_transakcije_id, broj_naloga, kolicina, cijena, naknada, datum, iznos) VALUES
-(1,  1,  1,  1, 'ORD-20001', 100.00,   30.00,    5.00,   '2020-01-20 10:15:00',  3000.00),
-(2,  1,  7,  1, 'ORD-20002', 10.00,    150.00,   7.50,   '2020-02-15 15:30:00',  1500.00),
-(3,  2,  11, 1, 'ORD-20003', 40.00,    100.00,   0.00,   '2020-03-25 11:00:00',  4000.00),
-(4,  3,  17, 1, 'ORD-20004', 5.00,     45000.00, 150.00, '2019-07-01 09:05:00',  225000.00),
-(5,  3,  17, 2, 'ORD-20005', 1.50,     60000.00, 100.00, '2021-04-12 14:00:00',  90000.00),
-(6,  4,  8,  1, 'ORD-20006', 20.00,    350.00,   15.00,  '2021-11-05 16:15:00',  7000.00),
-(7,  4,  9,  1, 'ORD-20007', 15.00,    400.00,   12.00,  '2022-01-10 10:30:00',  6000.00),
-(8,  6,  2,  1, 'ORD-20008', 50.00,    120.00,   10.00,  '2020-09-01 11:20:00',  6000.00),
-(9,  6,  3,  1, 'ORD-20009', 30.00,    75.00,    8.00,   '2020-10-15 13:45:00',  2250.00),
-(10, 7,  1,  1, 'ORD-20010', 150.00,   31.00,    6.50,   '2023-01-15 09:30:00',  4650.00),
-(11, 8,  14, 1, 'ORD-20011', 200.00,   400.00,   40.00,  '2018-05-02 10:00:00',  80000.00),
-(12, 8,  15, 1, 'ORD-20012', 500.00,   95.00,    25.00,  '2018-06-20 15:00:00',  47500.00),
-(13, 9,  18, 1, 'ORD-20013', 2.00,     2500.00,  10.00,  '2021-06-05 11:15:00',  5000.00),
-(14, 10, 21, 1, 'ORD-20014', 50.00,    210.00,   5.00,   '2022-07-20 14:30:00',  10500.00),
-(15, 11, 12, 1, 'ORD-20015', 500.00,   99.00,    0.00,   '2017-12-10 09:00:00',  49500.00),
-(16, 13, 14, 1, 'ORD-20016', 25.00,    430.00,   12.50,  '2022-09-10 10:45:00',  10750.00),
-(17, 14, 27, 1, 'ORD-20017', 100.00,   140.00,   20.00,  '2021-03-20 16:00:00',  14000.00),
-(18, 15, 11, 1, 'ORD-20018', 300.00,   100.50,   0.00,   '2020-05-28 11:30:00',  30150.00),
-(19, 17, 8,  1, 'ORD-20019', 40.00,    380.00,   30.00,  '2019-10-15 15:20:00',  15200.00),
-(20, 18, 13, 1, 'ORD-20020', 400.00,   100.00,   0.00,   '2021-09-05 09:30:00',  40000.00),
-(21, 20, 7,  1, 'ORD-20021', 500.00,   160.00,   150.00, '2016-02-01 10:00:00',  80000.00),
-(22, 21, 16, 1, 'ORD-20022', 150.00,   80.00,    15.00,  '2022-04-10 13:15:00',  12000.00),
-(23, 22, 14, 1, 'ORD-20023', 100.00,   450.00,   25.00,  '2021-06-25 11:00:00',  45000.00),
-(24, 24, 2,  1, 'ORD-20024', 400.00,   140.00,   35.00,  '2020-12-10 14:00:00',  56000.00),
-(25, 25, 15, 1, 'ORD-20025', 2000.00,  102.00,   100.00, '2018-07-25 09:45:00',  204000.00),
-(26, 27, 19, 1, 'ORD-20026', 100.00,   95.00,    12.00,  '2022-10-10 16:10:00',  9500.00),
-(27, 29, 16, 1, 'ORD-20027', 500.00,   85.00,    30.00,  '2021-03-05 10:30:00',  42500.00),
-(28, 30, 9,  1, 'ORD-20028', 1000.00,  300.00,   500.00, '2015-11-20 09:15:00',  300000.00),
-(29, 30, 17, 1, 'ORD-20029', 10.00,    15000.00, 200.00, '2017-05-14 11:00:00',  150000.00),
-(30, 30, 17, 2, 'ORD-20030', 5.00,     45000.00, 300.00, '2021-02-18 15:45:00',  225000.00);
- 
+
+-- 1. UPLATE (tip_transakcije_id = 1)
+(1,  1,  NULL, 1, 'UPL-00001', NULL,    NULL,     0.00,   '2020-01-18 09:00:00', 5000.00),
+(2,  2,  NULL, 1, 'UPL-00002', NULL,    NULL,     0.00,   '2020-03-21 10:00:00', 10000.00),
+(3,  3,  NULL, 1, 'UPL-00003', NULL,    NULL,     0.00,   '2019-06-15 11:30:00', 500000.00),
+(4,  4,  NULL, 1, 'UPL-00004', NULL,    NULL,     0.00,   '2021-11-02 10:00:00', 40000.00),
+(5,  6,  NULL, 1, 'UPL-00005', NULL,    NULL,     0.00,   '2020-08-26 14:20:00', 95000.00),
+(6,  10, NULL, 1, 'UPL-00006', NULL,    NULL,     0.00,   '2022-07-15 09:15:00', 15000.00),
+
+-- 2. KUPNJE (tip_transakcije_id = 3)
+(7,  1,  1,  3, 'KUP-00001', 100.00,  30.00,    5.00,   '2020-01-20 10:15:00', 3000.00),
+(8,  1,  7,  3, 'KUP-00002', 10.00,   150.00,   7.50,   '2020-02-15 15:30:00', 1500.00),
+(9,  2,  11, 3, 'KUP-00003', 40.00,   100.00,   2.00,   '2020-03-25 11:00:00', 4000.00),
+(10, 3,  17, 3, 'KUP-00004', 5.00,    45000.00, 150.00, '2019-07-01 09:05:00', 225000.00),
+(11, 4,  8,  3, 'KUP-00005', 20.00,   350.00,   15.00,  '2021-11-05 16:15:00', 7000.00),
+(12, 4,  9,  3, 'KUP-00006', 15.00,   400.00,   12.00,  '2022-01-10 10:30:00', 6000.00),
+(13, 6,  2,  3, 'KUP-00007', 50.00,   120.00,   10.00,  '2020-09-01 11:20:00', 6000.00),
+(14, 6,  3,  3, 'KUP-00008', 30.00,   75.00,    8.00,   '2020-10-15 13:45:00', 2250.00),
+(15, 7,  1,  3, 'KUP-00009', 150.00,  31.00,    6.50,   '2023-01-15 09:30:00', 4650.00),
+(16, 8,  14, 3, 'KUP-00010', 200.00,  400.00,   40.00,  '2018-05-02 10:00:00', 80000.00),
+(17, 8,  15, 3, 'KUP-00011', 500.00,  95.00,    25.00,  '2018-06-20 15:00:00', 47500.00),
+(18, 10, 21, 3, 'KUP-00012', 50.00,   210.00,   5.00,   '2022-07-20 14:30:00', 10500.00),
+(19, 15, 11, 3, 'KUP-00013', 300.00,  100.50,   0.00,   '2020-05-28 11:30:00', 30150.00),
+(20, 20, 7,  3, 'KUP-00014', 500.00,  160.00,   150.00, '2016-02-01 10:00:00', 80000.00),
+
+-- 3. PRODAJE (tip_transakcije_id = 4)
+(21, 1,  7,  4, 'PRD-00001', 5.00,    165.00,   7.50,   '2023-01-16 10:00:00', 825.00),
+(22, 3,  17, 4, 'PRD-00002', 1.50,    60000.00, 100.00, '2021-04-12 14:00:00', 90000.00),
+(23, 6,  2,  4, 'PRD-00003', 20.00,   150.00,   5.00,   '2023-05-10 11:00:00', 3000.00),
+(24, 8,  14, 4, 'PRD-00004', 50.00,   450.00,   15.00,  '2022-06-15 16:00:00', 225000.00),
+(25, 30, 17, 4, 'PRD-00005', 5.00,    45000.00, 300.00, '2021-02-18 15:45:00', 225000.00),
+
+-- 4. DIVIDENDE (tip_transakcije_id = 5)
+(26, 1,  1,  5, 'DIV-00001', NULL,    NULL,     0.00,   '2021-05-10 12:00:00', 150.00),
+(27, 1,  7,  5, 'DIV-00002', NULL,    NULL,     0.00,   '2021-08-15 12:00:00', 8.50),
+(28, 6,  2,  5, 'DIV-00003', NULL,    NULL,     0.00,   '2021-07-10 10:00:00', 250.00),
+
+-- 5. ISPLATE (tip_transakcije_id = 2)
+(29, 1,  NULL, 2, 'ISP-00001', NULL,    NULL,     2.00,   '2023-02-20 14:00:00', 1000.00),
+(30, 3,  NULL, 2, 'ISP-00002', NULL,    NULL,     5.00,   '2022-12-10 09:00:00', 15000.00);
+
+
 -- ==========================================
 -- 10. PORTFELJ IMOVINA (nepromijenjen)
 -- ==========================================
@@ -410,66 +427,31 @@ INSERT INTO povijesna_cijena_imovine (id, imovina_id, cijena, datum) VALUES
 (30, 11, 101.25,   '2023-01-01 09:00:00');
 
  
+
+ -- ==============================================================================
+-- OSNOVNI I JEDNOSTAVNI UPITI ZA PROVJERU BAZE
 -- ==============================================================================
--- UPITI
--- ==============================================================================
- 
-SELECT k.ime, k.prezime, ROUND(r.stanje, 2)
-FROM klijent AS k
-JOIN investicijski_racun AS r ON k.id = r.klijent_id;
- 
-SELECT ime, prezime, mjesto, ROUND(r.stanje, 2)
-FROM klijent AS k
-JOIN investicijski_racun AS r ON k.id = r.klijent_id
-WHERE mjesto = 'Zagreb'
-ORDER BY r.stanje DESC;
- 
-SELECT * FROM tip_transakcije;
- 
--- ==============================================================================
--- UPIT 2: NAJPOPULARNIJA IMOVINA NA PLATFORMI
--- ==============================================================================
-SELECT
-    i.ime AS naziv_imovine,
-    COUNT(t.id) AS ukupan_broj_transakcija,
-    ROUND(SUM(t.kolicina * t.cijena), 2) AS ukupno_ulozen_novac
-FROM imovina i
-JOIN transakcija t ON i.id = t.imovina_id
-GROUP BY i.id, i.ime
-ORDER BY ukupno_ulozen_novac DESC;
- 
--- ==============================================================================
--- VIEW 1: KATALOG IMOVINE S TRENUTNIM CIJENAMA
--- ==============================================================================
-CREATE OR REPLACE VIEW katalog_imovine_cijene AS
-SELECT i.ime, ti.tip, pci.cijena, pci.datum
-FROM imovina i
-JOIN tip_imovine ti ON i.tip_imovine_id = ti.id
-JOIN povijesna_cijena_imovine pci ON i.id = pci.imovina_id
-WHERE pci.datum = (
-    SELECT MAX(pci2.datum)
-    FROM povijesna_cijena_imovine pci2
-    WHERE pci2.imovina_id = pci.imovina_id
-);
- 
-SELECT * FROM katalog_imovine_cijene;
- 
--- ==============================================================================
--- VIEW 2: STRUKTURA PORTFELJA KORISNIKA
--- ==============================================================================
-CREATE OR REPLACE VIEW struktura_portfelja_korisnika AS
-SELECT
-    k.prezime,
-    k.ime,
-    ti.tip AS kategorija_imovine,
-    SUM(pi.kolicina) AS ukupna_kolicina
+
+-- 1. Popis svih klijenata i njihovih brojeva mobitela
+SELECT ime, prezime, email, telefon 
+FROM klijent
+ORDER BY prezime ASC;
+
+
+-- 2. Prikaz svih računa koji na stanju imaju više od 50.000 EUR
+SELECT broj_racuna, ROUND(stanje, 2) AS stanje_eura, datum_otvaranja 
+FROM investicijski_racun
+WHERE stanje > 50000.00
+ORDER BY stanje DESC;
+
+
+-- 3. Spajanje klijenta i njegovog računa (Osnovni JOIN)
+SELECT k.ime, k.prezime, r.broj_racuna, ROUND(r.stanje, 2) AS stanje 
 FROM klijent k
-JOIN investicijski_racun ir ON k.id = ir.klijent_id
-JOIN portfelj p ON ir.id = p.investicijski_racun_id
-JOIN portfelj_imovina pi ON p.id = pi.portfelj_id
-JOIN imovina i ON pi.imovina_id = i.id
-JOIN tip_imovine ti ON i.tip_imovine_id = ti.id
-GROUP BY k.id, k.ime, k.prezime, ti.id, ti.tip;
- 
-SELECT * FROM struktura_portfelja_korisnika
-ORDER BY prezime ASC, ime ASC;
+JOIN investicijski_racun r ON k.id = r.klijent_id;
+
+
+-- 4. Broj otvorenih portfelja po sklonosti riziku
+SELECT sklonost_riziku, COUNT(*) AS broj_portfelja
+FROM portfelj
+GROUP BY sklonost_riziku;
